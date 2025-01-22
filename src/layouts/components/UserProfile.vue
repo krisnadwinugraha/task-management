@@ -1,6 +1,11 @@
 <script setup>
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
+import { useAuthStore } from '@/stores/useAuthStore'
+import { useRouter } from 'vue-router'
 import avatar1 from '@images/avatars/avatar-1.png'
+
+const router = useRouter()
+const authStore = useAuthStore()
 
 const userProfileList = [
   { type: 'divider' },
@@ -41,6 +46,24 @@ const userProfileList = [
     href: '#',
   },
 ]
+
+const handleLogout = async () => {
+  console.error('success');
+  try { 
+    // Clear authentication state
+    authStore.logout();
+    
+    // Force a reactivity update to ensure state is reset
+    await nextTick();
+
+    // Redirect to login
+    await router.push('/login');
+  } catch (error) {
+    console.error('Logout error:', error);
+  }
+};
+
+
 </script>
 
 <template>
@@ -126,7 +149,7 @@ const userProfileList = [
                 color="error"
                 size="small"
                 append-icon="ri-logout-box-r-line"
-                :to="{ name: 'login' }"
+                @click="handleLogout"
               >
                 Logout
               </VBtn>

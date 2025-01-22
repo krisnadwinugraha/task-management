@@ -1,4 +1,7 @@
 <script setup>
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/useAuthStore'
 import { useGenerateImageVariant } from '@/@core/composable/useGenerateImageVariant'
 import AuthProvider from '@/views/pages/authentication/AuthProvider.vue'
 import authV2LoginIllustrationBorderedDark from '@images/pages/auth-v2-login-illustration-bordered-dark.png'
@@ -10,17 +13,38 @@ import authV2LoginMaskLight from '@images/pages/auth-v2-login-mask-light.png'
 import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
 import { themeConfig } from '@themeConfig'
 
+const router = useRouter()
+const authStore = useAuthStore()
+
 const form = ref({
   email: '',
   password: '',
   remember: false,
 })
 
-definePage({ meta: { layout: 'blank' } })
-
 const isPasswordVisible = ref(false)
+const errorMessage = ref('') // Reactive error message
+const successMessage = ref('') // Reactive error message
 const authV2LoginMask = useGenerateImageVariant(authV2LoginMaskLight, authV2LoginMaskDark)
 const authV2LoginIllustration = useGenerateImageVariant(authV2LoginIllustrationLight, authV2LoginIllustrationDark, authV2LoginIllustrationBorderedLight, authV2LoginIllustrationBorderedDark, true)
+
+definePage({ meta: { layout: 'blank' } })
+
+async function handleLogin() {
+  const success = await authStore.login(
+    form.value.email,
+    form.value.password,
+    form.value.remember
+  )
+  
+  if (success) {
+    successMessage.value = 'Login successful! Redirecting...' // Set the success message
+    router.push('/')
+  } else {
+    // Set the error message
+    errorMessage.value = 'Incorrect email or password. Please try again.' // Set the error message
+  }
+}
 </script>
 
 <template>
@@ -76,7 +100,26 @@ const authV2LoginIllustration = useGenerateImageVariant(authV2LoginIllustrationL
         </VCardText>
 
         <VCardText>
-          <VForm @submit.prevent="() => {}">
+          <VAlert
+            v-if="successMessage"
+            variant="outlined"
+            color="success"
+            class="mb-4"
+          >
+            {{ successMessage }}
+          </VAlert>
+
+          <!-- Error Alert -->
+          <VAlert
+            v-if="errorMessage"
+            variant="outlined"
+            color="error"
+            class="mb-4"
+          >
+            {{ errorMessage }}
+          </VAlert>
+
+          <VForm @submit.prevent="handleLogin">
             <VRow>
               <!-- email -->
               <VCol cols="12">
@@ -119,6 +162,7 @@ const authV2LoginIllustration = useGenerateImageVariant(authV2LoginIllustrationL
                 <VBtn
                   block
                   type="submit"
+                  :loading="authStore.loading"
                 >
                   Login
                 </VBtn>
