@@ -1,6 +1,11 @@
 // router/index.js
 import { createRouter, createWebHistory } from 'vue-router/auto'
-import { useAuthStore } from '../stores/auth'
+import { createPinia } from 'pinia' 
+import { useTasksStore } from './tasks'
+import { useUsersStore } from './users'
+import { useAuthStore } from './auth'
+
+const pinia = createPinia()
 
 const router = createRouter({
   history: createWebHistory(),
@@ -8,19 +13,25 @@ const router = createRouter({
 
 // Navigation guard
 router.beforeEach((to, from, next) => {
-    const authStore = useAuthStore()
-    const publicPages = ['/login']
-    const authRequired = !publicPages.includes(to.path)
-    
-    if (authRequired && !authStore.isAuthenticated) {
-      return next('/login')
-    }
-    
-    if (to.path === '/login' && authStore.isAuthenticated) {
-      return next('/')
-    }
-    
-    next()
-  })
+  const authStore = useAuthStore()
+  const publicPages = ['/login']
+  const authRequired = !publicPages.includes(to.path)
+  
+  if (authRequired && !authStore.isAuthenticated) {
+    return next('/login')
+  }
+  
+  if (to.path === '/login' && authStore.isAuthenticated) {
+    return next('/')
+  }
+  
+  next()
+})
 
-export default router
+
+export {
+    pinia,
+    useTasksStore,
+    useUsersStore,
+    router
+  }

@@ -1,7 +1,8 @@
 // stores/auth.js
-import axios from 'axios'
-import { defineStore } from 'pinia'
+import axios from 'axios';
+import { defineStore } from 'pinia';
 
+const API_URL = import.meta.env.VITE_API_URL;
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null,
@@ -16,7 +17,7 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     async login(email, password) {
       try {
-        const response = await axios.post('http://127.0.0.1:8000/api/login', {
+        const response = await axios.post(`${API_URL}/login`, {
           email,
           password,
         })

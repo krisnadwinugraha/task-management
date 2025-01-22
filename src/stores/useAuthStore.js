@@ -1,6 +1,8 @@
 // @/stores/useAuthStore.js
-import axios from 'axios'
-import { defineStore } from 'pinia'
+import axios from 'axios';
+import { defineStore } from 'pinia';
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -18,7 +20,7 @@ export const useAuthStore = defineStore('auth', {
     async login(email, password, remember = true) { // Made remember default to true
       this.loading = true
       try {
-        const response = await axios.post('http://127.0.0.1:8000/api/login', {
+        const response = await axios.post(`${API_URL}/login`, {
           email,
           password,
         })
