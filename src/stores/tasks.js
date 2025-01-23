@@ -71,8 +71,10 @@ export const useTasksStore = defineStore('tasks', {
 
     async updateTask({ id, taskData }) {
       try {
+        const plainTaskData = JSON.parse(JSON.stringify(taskData))
+        console.log('Plain task data:', plainTaskData)
         this.formLoading = true
-        await axios.put(`${import.meta.env.VITE_API_URL}/tasks/${id}`, taskData, {
+        await axios.put(`${import.meta.env.VITE_API_URL}/tasks/${id}`, plainTaskData, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Accept': 'application/json'
@@ -85,11 +87,12 @@ export const useTasksStore = defineStore('tasks', {
         if (error.response?.data?.errors) {
           this.formErrors = error.response.data.errors
         }
+        console.error('Update task error:', error)
       } finally {
         this.formLoading = false
       }
     },
-
+    
     async deleteTask() {
       try {
         this.deleteLoading = true

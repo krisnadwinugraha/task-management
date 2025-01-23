@@ -1,100 +1,127 @@
 <script setup>
-  import { computed, onMounted, ref } from 'vue'
-  import { useTasksStore } from '../stores/tasks'
-  import { useUsersStore } from '../stores/users'
+import { computed, onMounted, ref } from 'vue'
+import { useTasksStore } from '../stores/tasks'
+import { useUsersStore } from '../stores/users'
 
-  const tasksStore = useTasksStore()
-  const usersStore = useUsersStore()
+const tasksStore = useTasksStore()
+const usersStore = useUsersStore()
 
-  // Computed properties from store
-  const tasks = computed(() => tasksStore.tasks)
-  const loading = computed(() => tasksStore.loading)
-  const error = computed(() => tasksStore.error)
-  const formDialog = computed({
-    get: () => tasksStore.formDialog,
-    set: (value) => tasksStore.formDialog = value
-  })
-  const deleteDialog = computed({
-    get: () => tasksStore.deleteDialog,
-    set: (value) => tasksStore.deleteDialog = value
-  })
-  const formMode = computed(() => tasksStore.formMode)
-  const formLoading = computed(() => tasksStore.formLoading)
-  const formErrors = computed(() => tasksStore.formErrors)
-  const deleteError = computed(() => tasksStore.deleteError)
-  const deleteLoading = computed(() => tasksStore.deleteLoading)
-  const currentTask = computed(() => tasksStore.currentTask)
-  const users = computed(() => usersStore.users)
-  const userLoading = computed(() => usersStore.loading)
+// Computed properties from store
+const tasks = computed(() => tasksStore.tasks)
+const loading = computed(() => tasksStore.loading)
+const error = computed(() => tasksStore.error)
+const formDialog = computed({
+  get: () => tasksStore.formDialog,
+  set: (value) => tasksStore.formDialog = value
+})
+const deleteDialog = computed({
+  get: () => tasksStore.deleteDialog,
+  set: (value) => tasksStore.deleteDialog = value
+})
+const formMode = computed(() => tasksStore.formMode)
+const formLoading = computed(() => tasksStore.formLoading)
+const formErrors = computed(() => tasksStore.formErrors)
+const deleteError = computed(() => tasksStore.deleteError)
+const deleteLoading = computed(() => tasksStore.deleteLoading)
+const currentTask = computed(() => tasksStore.currentTask)
+const users = computed(() => usersStore.users)
+const userLoading = computed(() => usersStore.loading)
 
-  // For pagination
-  const currentPage = computed({
-    get: () => tasksStore.pagination.currentPage,
-    set: (value) => tasksStore.pagination = { ...tasksStore.pagination, currentPage: value }
-  })
-  const totalPages = computed(() => tasksStore.pagination.totalPages)
+// For pagination
+const currentPage = computed({
+  get: () => tasksStore.pagination.currentPage,
+  set: (value) => tasksStore.pagination = { ...tasksStore.pagination, currentPage: value }
+})
+const totalPages = computed(() => tasksStore.pagination.totalPages)
 
-  // Rest of your options stay the same
-  const statusOptions = [/* ... */]
-  const priorityOptions = [/* ... */]
-  const headers = [/* ... */]
-  const formData = ref({/* ... */})
+// Dropdown options
+const statusOptions = [
+  { title: 'Pending', value: 'pending' },
+  { title: 'In Progress', value: 'in_progress' },
+  { title: 'Completed', value: 'completed' },
+  { title: 'On Hold', value: 'on_hold' }
+]
 
-  // Methods
-  const fetchTasks = (page = 1) => {
-    tasksStore.fetchTasks(page)
+const priorityOptions = [
+  { title: 'Low', value: 'low' },
+  { title: 'Medium', value: 'medium' },
+  { title: 'High', value: 'high' },
+  { title: 'Urgent', value: 'urgent' }
+]
+
+// Table headers
+const headers = [/* Add your headers */]
+const formData = ref({
+  title: '',
+  description: '',
+  status: 'pending',
+  priority: 'low',
+  due_date: null,
+  assigned_to: null
+})
+
+// Methods
+const fetchTasks = (page = 1) => {
+  tasksStore.fetchTasks(page)
+}
+
+const handleCreateTask = async () => {
+  tasksStore.formMode = 'create'
+  formData.value = {
+    title: '',
+    description: '',
+    status: 'pending',
+    priority: 'low',
+    due_date: null,
+    assigned_to: null
+  }
+  tasksStore.formDialog = true
+  await usersStore.fetchUsers()
+}
+
+const handleEditTask = async (task) => {
+  tasksStore.formMode = 'edit'
+  tasksStore.currentTask = task
+  formData.value = {
+    ...task,
+    due_date: task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : null
+  }
+  tasksStore.formDialog = true
+  await usersStore.fetchUsers()
+}
+
+const handleDeleteTask = (task) => {
+  tasksStore.currentTask = task
+  tasksStore.deleteDialog = true
+}
+
+const handleDeleteConfirm = () => {
+  tasksStore.deleteTask()
+}
+
+const handleFormSubmit = () => {
+  const cleanTaskData = {
+    ...formData.value,
+    assigned_to: formData.value.assigned_to?.id || null,
   }
 
-  const handleCreateTask = async () => {
-    tasksStore.formMode = 'create'
-    formData.value = {
-      title: '',
-      description: '',
-      status: 'pending',
-      priority: 'low',
-      due_date: null,
-      assigned_to: null
-    }
-    tasksStore.formDialog = true
-    await usersStore.fetchUsers()
+  if (formMode.value === 'create') {
+    tasksStore.createTask(cleanTaskData)
+  } else {
+    tasksStore.updateTask({
+      id: currentTask.value.id,
+      taskData: cleanTaskData
+    })
   }
+}
+// Utility functions
+const formatDate = (date) => {/* Add your function */}
+const getStatusColor = (status) => {/* Add your function */}
+const getPriorityColor = (priority) => {/* Add your function */}
 
-  const handleEditTask = async (task) => {
-    tasksStore.formMode = 'edit'
-    tasksStore.currentTask = task
-    formData.value = { ...task }
-    tasksStore.formDialog = true
-    await usersStore.fetchUsers()
-  }
-
-  const handleDeleteTask = (task) => {
-    tasksStore.currentTask = task
-    tasksStore.deleteDialog = true
-  }
-
-  const handleDeleteConfirm = () => {
-    tasksStore.deleteTask()
-  }
-
-  const handleFormSubmit = () => {
-    if (formMode.value === 'create') {
-      tasksStore.createTask(formData.value)
-    } else {
-      tasksStore.updateTask({
-        id: currentTask.value.id,
-        taskData: formData.value
-      })
-    }
-  }
-
-  // Your utility functions stay the same
-  const formatDate = (date) => {/* ... */}
-  const getStatusColor = (status) => {/* ... */}
-  const getPriorityColor = (priority) => {/* ... */}
-
-  onMounted(() => {
-    fetchTasks()
-  })
+onMounted(() => {
+  fetchTasks()
+})
 </script>
 
 <template>
