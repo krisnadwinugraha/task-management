@@ -1,7 +1,7 @@
 <script setup>
   import { computed, onMounted, ref } from 'vue'
-  import { useTasksStore } from '../stores/tasks'
-  import { useUsersStore } from '../stores/users'
+import { useTasksStore } from '../stores/tasks'
+import { useUsersStore } from '../stores/users'
 
   const tasksStore = useTasksStore()
   const usersStore = useUsersStore()
@@ -50,7 +50,18 @@
   ]
 
   // Table headers
-  const headers = [/* Add your headers */]
+  const headers = [
+    { title: 'ID', key: 'id', sortable: true },
+    { title: 'Title', key: 'title', sortable: true },
+    { title: 'Description', key: 'description' },
+    { title: 'Status', key: 'status', sortable: true },
+    { title: 'Priority', key: 'priority', sortable: true },
+    { title: 'Due Date', key: 'due_date', sortable: true },
+    { title: 'Created At', key: 'created_at', sortable: true },
+    { title: 'Assigned To', key: 'assigned_to', sortable: true },
+    { title: 'Actions', key: 'actions', sortable: false },
+  ]
+
   const formData = ref({
     title: '',
     description: '',
@@ -115,9 +126,35 @@
     }
   }
   // Utility functions
-  const formatDate = (date) => {/* Add your function */}
-  const getStatusColor = (status) => {/* Add your function */}
-  const getPriorityColor = (priority) => {/* Add your function */}
+  const formatDate = (date) => {
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  }
+
+  const getStatusColor = (status) => {
+    const statusColors = {
+      completed: 'success',
+      in_progress: 'info',
+      on_hold: 'warning',
+      pending: 'grey',
+    }
+    return statusColors[status] || 'default'
+  }
+
+  const getPriorityColor = (priority) => {
+    const priorityColors = {
+      high: 'error',
+      medium: 'warning',
+      low: 'success',
+      urgent: 'purple'
+    }
+    return priorityColors[priority] || 'default'
+  }
 
   onMounted(() => {
     fetchTasks()
