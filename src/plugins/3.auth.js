@@ -1,8 +1,8 @@
-import { useAuthStore } from '@/stores/useAuthStore';
-import axios from 'axios';
-import { router } from './1.router';
+import { useAuthStore } from '@/stores/useAuthStore'
+import axios from 'axios'
+import { router } from './1.router'
 
-const API_URL = import.meta.env.VITE_API_URL; // Access environment variable for API URL
+const API_URL = import.meta.env.VITE_API_URL // Access environment variable for API URL
 
 export default function () {
   // Initialize auth store - not used currently but might be needed later
@@ -25,8 +25,9 @@ export default function () {
         localStorage.removeItem('token')
         router.push('/login')
       }
+      
       return Promise.reject(error)
-    }
+    },
   )
   
   // Add router guard
