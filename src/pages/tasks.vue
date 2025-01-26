@@ -1,169 +1,168 @@
 <script setup>
-  import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useTasksStore } from '../stores/tasks'
 import { useUsersStore } from '../stores/users'
 
-  const tasksStore = useTasksStore()
-  const usersStore = useUsersStore()
+const tasksStore = useTasksStore()
+const usersStore = useUsersStore()
 
-  // Computed properties from store
-  const tasks = computed(() => tasksStore.tasks)
-  const loading = computed(() => tasksStore.loading)
-  const error = computed(() => tasksStore.error)
-  const formDialog = computed({
-    get: () => tasksStore.formDialog,
-    set: (value) => tasksStore.formDialog = value
-  })
-  const deleteDialog = computed({
-    get: () => tasksStore.deleteDialog,
-    set: (value) => tasksStore.deleteDialog = value
-  })
-  const formMode = computed(() => tasksStore.formMode)
-  const formLoading = computed(() => tasksStore.formLoading)
-  const formErrors = computed(() => tasksStore.formErrors)
-  const deleteError = computed(() => tasksStore.deleteError)
-  const deleteLoading = computed(() => tasksStore.deleteLoading)
-  const currentTask = computed(() => tasksStore.currentTask)
-  const users = computed(() => usersStore.users)
-  const userLoading = computed(() => usersStore.loading)
+// Computed properties from store
+const tasks = computed(() => tasksStore.tasks)
+const loading = computed(() => tasksStore.loading)
+const error = computed(() => tasksStore.error)
+const formDialog = computed({
+  get: () => tasksStore.formDialog,
+  set: (value) => tasksStore.formDialog = value
+})
+const deleteDialog = computed({
+  get: () => tasksStore.deleteDialog,
+  set: (value) => tasksStore.deleteDialog = value
+})
+const formMode = computed(() => tasksStore.formMode)
+const formLoading = computed(() => tasksStore.formLoading)
+const formErrors = computed(() => tasksStore.formErrors)
+const deleteError = computed(() => tasksStore.deleteError)
+const deleteLoading = computed(() => tasksStore.deleteLoading)
+const currentTask = computed(() => tasksStore.currentTask)
+const users = computed(() => usersStore.users)
+const userLoading = computed(() => usersStore.loading)
 
-  // For pagination
-  const currentPage = computed({
-    get: () => tasksStore.pagination.currentPage,
-    set: (value) => tasksStore.pagination = { ...tasksStore.pagination, currentPage: value }
-  })
-  const totalPages = computed(() => tasksStore.pagination.totalPages)
+// For pagination
+const currentPage = computed({
+  get: () => tasksStore.pagination.currentPage,
+  set: (value) => tasksStore.pagination = { ...tasksStore.pagination, currentPage: value }
+})
+const totalPages = computed(() => tasksStore.pagination.totalPages)
 
-  // Dropdown options
-  const statusOptions = [
-    { title: 'Pending', value: 'pending' },
-    { title: 'In Progress', value: 'in_progress' },
-    { title: 'Completed', value: 'completed' },
-    { title: 'On Hold', value: 'on_hold' }
-  ]
+// Dropdown options
+const statusOptions = [
+  { title: 'Pending', value: 'pending' },
+  { title: 'In Progress', value: 'in_progress' },
+  { title: 'Completed', value: 'completed' },
+  { title: 'On Hold', value: 'on_hold' }
+]
 
-  const priorityOptions = [
-    { title: 'Low', value: 'low' },
-    { title: 'Medium', value: 'medium' },
-    { title: 'High', value: 'high' },
-    { title: 'Urgent', value: 'urgent' }
-  ]
+const priorityOptions = [
+  { title: 'Low', value: 'low' },
+  { title: 'Medium', value: 'medium' },
+  { title: 'High', value: 'high' },
+  { title: 'Urgent', value: 'urgent' }
+]
 
-  // Table headers
-  const headers = [
-    { title: 'ID', key: 'id', sortable: true },
-    { title: 'Title', key: 'title', sortable: true },
-    { title: 'Description', key: 'description' },
-    { title: 'Status', key: 'status', sortable: true },
-    { title: 'Priority', key: 'priority', sortable: true },
-    { title: 'Due Date', key: 'due_date', sortable: true },
-    { title: 'Created At', key: 'created_at', sortable: true },
-    { title: 'Assigned To', key: 'assigned_to', sortable: true },
-    { title: 'Actions', key: 'actions', sortable: false },
-  ]
+// Table headers
+const headers = [
+  { title: 'ID', key: 'id', sortable: true },
+  { title: 'Title', key: 'title', sortable: true },
+  { title: 'Description', key: 'description' },
+  { title: 'Status', key: 'status', sortable: true },
+  { title: 'Priority', key: 'priority', sortable: true },
+  { title: 'Due Date', key: 'due_date', sortable: true },
+  { title: 'Created At', key: 'created_at', sortable: true },
+  { title: 'Assigned To', key: 'assigned_to', sortable: true },
+  { title: 'Actions', key: 'actions', sortable: false },
+]
 
-  const formData = ref({
+const formData = ref({
+  title: '',
+  description: '',
+  status: 'pending',
+  priority: 'low',
+  due_date: null,
+  assigned_to: null
+})
+
+// Methods
+const fetchTasks = (page = 1) => {
+  tasksStore.fetchTasks(page)
+}
+
+const handleCreateTask = async () => {
+  tasksStore.formMode = 'create'
+  formData.value = {
     title: '',
     description: '',
     status: 'pending',
     priority: 'low',
     due_date: null,
     assigned_to: null
-  })
+  }
+  tasksStore.formDialog = true
+  await usersStore.fetchUsers()
+}
 
-  // Methods
-  const fetchTasks = (page = 1) => {
-    tasksStore.fetchTasks(page)
+const handleEditTask = async (task) => {
+  tasksStore.formMode = 'edit'
+  tasksStore.currentTask = task
+  formData.value = {
+    ...task,
+    due_date: task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : null
+  }
+  tasksStore.formDialog = true
+  await usersStore.fetchUsers()
+}
+
+const handleDeleteTask = (task) => {
+  tasksStore.currentTask = task
+  tasksStore.deleteDialog = true
+}
+
+const handleDeleteConfirm = () => {
+  tasksStore.deleteTask()
+}
+
+const handleFormSubmit = () => {
+  const cleanTaskData = {
+    ...formData.value,
+    assigned_to: formData.value.assigned_to?.id || null,
   }
 
-  const handleCreateTask = async () => {
-    tasksStore.formMode = 'create'
-    formData.value = {
-      title: '',
-      description: '',
-      status: 'pending',
-      priority: 'low',
-      due_date: null,
-      assigned_to: null
-    }
-    tasksStore.formDialog = true
-    await usersStore.fetchUsers()
-  }
-
-  const handleEditTask = async (task) => {
-    tasksStore.formMode = 'edit'
-    tasksStore.currentTask = task
-    formData.value = {
-      ...task,
-      due_date: task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : null
-    }
-    tasksStore.formDialog = true
-    await usersStore.fetchUsers()
-  }
-
-  const handleDeleteTask = (task) => {
-    tasksStore.currentTask = task
-    tasksStore.deleteDialog = true
-  }
-
-  const handleDeleteConfirm = () => {
-    tasksStore.deleteTask()
-  }
-
-  const handleFormSubmit = () => {
-    const cleanTaskData = {
-      ...formData.value,
-      assigned_to: formData.value.assigned_to?.id || null,
-    }
-
-    if (formMode.value === 'create') {
-      tasksStore.createTask(cleanTaskData)
-    } else {
-      tasksStore.updateTask({
-        id: currentTask.value.id,
-        taskData: cleanTaskData
-      })
-    }
-  }
-  // Utility functions
-  const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+  if (formMode.value === 'create') {
+    tasksStore.createTask(cleanTaskData)
+  } else {
+    tasksStore.updateTask({
+      id: currentTask.value.id,
+      taskData: cleanTaskData
     })
   }
+}
 
-  const getStatusColor = (status) => {
-    const statusColors = {
-      completed: 'success',
-      in_progress: 'info',
-      on_hold: 'warning',
-      pending: 'grey',
-    }
-    return statusColors[status] || 'default'
-  }
-
-  const getPriorityColor = (priority) => {
-    const priorityColors = {
-      high: 'error',
-      medium: 'warning',
-      low: 'success',
-      urgent: 'purple'
-    }
-    return priorityColors[priority] || 'default'
-  }
-
-  onMounted(() => {
-    fetchTasks()
+// Utility functions
+const formatDate = (date) => {
+  return new Date(date).toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
   })
+}
+
+const getStatusColor = (status) => {
+  const statusColors = {
+    completed: 'success',
+    in_progress: 'info',
+    on_hold: 'warning',
+    pending: 'grey',
+  }
+  return statusColors[status] || 'default'
+}
+
+const getPriorityColor = (priority) => {
+  const priorityColors = {
+    high: 'error',
+    medium: 'warning',
+    low: 'success',
+    urgent: 'purple'
+  }
+  return priorityColors[priority] || 'default'
+}
+
+onMounted(() => {
+  fetchTasks()
+})
 </script>
 
 <template>
   <div>
-    <VCard>
+    <VCard class="elevation-2">
       <VCardTitle class="d-flex justify-space-between align-center">
         <h5 class="text-h5">
           Tasks List
@@ -206,9 +205,17 @@ import { useUsersStore } from '../stores/users'
           {{ error }}
         </VAlert>
 
+        <!-- Loading Spinner -->
+        <VProgressCircular
+          v-if="loading"
+          indeterminate
+          color="primary"
+          class="d-flex justify-center my-4"
+        />
+
         <!-- Table -->
         <VTable
-          :loading="loading"
+          v-if="!loading"
           hover
           class="elevation-1"
         >
@@ -458,5 +465,21 @@ import { useUsersStore } from '../stores/users'
   max-inline-size: 300px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.elevation-2 {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 10%);
+}
+
+.elevation-1 {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 10%);
+}
+
+.v-btn {
+  transition: background-color 0.3s ease;
+}
+
+.v-btn:hover {
+  background-color: rgba(0, 0, 0, 10%);
 }
 </style>

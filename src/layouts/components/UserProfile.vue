@@ -63,6 +63,8 @@ const handleLogout = async () => {
   }
 };
 
+// Get user data from the store
+const user = authStore.getUser;
 
 </script>
 
@@ -98,10 +100,10 @@ const handleLogout = async () => {
 
               <div>
                 <div class="text-body-2 font-weight-medium text-high-emphasis">
-                  John Doe
+                  {{ user.name }}
                 </div>
                 <div class="text-capitalize text-caption text-disabled">
-                  Admin
+                  {{ user.email }}
                 </div>
               </div>
             </div>
