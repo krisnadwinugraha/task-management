@@ -1,17 +1,36 @@
 <script setup>
 import axios from 'axios'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 const activities = ref([])
 const loading = ref(false)
 const error = ref(null)
+const searchQuery = ref('')
+const selectedType = ref('all')
+
+// Activity types with their corresponding icons and colors
+const activityTypes = {
+  create: { icon: 'ri-add-circle-line', color: 'success' },
+  update: { icon: 'ri-edit-2-line', color: 'info' },
+  delete: { icon: 'ri-delete-bin-line', color: 'error' },
+  default: { icon: 'ri-information-line', color: 'primary' }
+}
+
+const filteredActivities = computed(() => {
+  return activities.value.filter(activity => {
+    const matchesSearch = activity.description.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      activity.causer?.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+    const matchesType = selectedType.value === 'all' || activity.type === selectedType.value
+    return matchesSearch && matchesType
+  })
+})
 
 const fetchActivities = async () => {
   loading.value = true
   error.value = null
   try {
     const response = await axios.get('http://127.0.0.1:8000/api/activities')
-    activities.value = response.data.activities // Access the activities array
+    activities.value = response.data.activities
   } catch (err) {
     error.value = 'Failed to load activities'
     console.error('Fetch activities error:', err)
@@ -20,156 +39,316 @@ const fetchActivities = async () => {
   }
 }
 
+const getActivityTypeInfo = (activity) => {
+  const type = activity.description.toLowerCase().includes('created') ? 'create' 
+             : activity.description.toLowerCase().includes('updated') ? 'update'
+             : activity.description.toLowerCase().includes('deleted') ? 'delete'
+             : 'default'
+  return activityTypes[type]
+}
+
+const formatTimestamp = (timestamp) => {
+  const date = new Date(timestamp)
+  const now = new Date()
+  const diffMs = now - date
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMins / 60)
+  const diffDays = Math.floor(diffHours / 24)
+
+  if (diffMins < 60) return `${diffMins} minutes ago`
+  if (diffHours < 24) return `${diffHours} hours ago`
+  if (diffDays < 7) return `${diffDays} days ago`
+  return date.toLocaleDateString('en-US', { 
+    day: 'numeric', 
+    month: 'short', 
+    year: 'numeric'
+  })
+}
+
 onMounted(() => {
   fetchActivities()
 })
-
-const formatChanges = (changes) => {
-  const formattedChanges = []
-  for (const [key, value] of Object.entries(changes)) {
-    formattedChanges.push(`${key}: ${JSON.stringify(value)}`)
-  }
-  return formattedChanges.join(', ')
-}
-
-const formatChangeDetails = (changes) => {
-  return Object.entries(changes).map(([key, value]) => {
-    return `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value}`
-  }).join(', ')
-}
 </script>
 
 <template>
-  <div>
-    <VCard class="elevation-2">
-      <VCardTitle class="d-flex justify-space-between align-center">
-        <h5 class="text-h5">
-          Activities List
-        </h5>
+  <VCard class="activity-log-card">
+    <VCardTitle class="d-flex justify-space-between align-center pa-6">
+      <div class="d-flex align-center">
+        <VIcon icon="ri-history-line" size="large" class="me-3" />
+        <h5 class="text-h5 font-weight-bold mb-0">Activity Log</h5>
+      </div>
+      <div class="d-flex align-center">
+        <VTextField
+          v-model="searchQuery"
+          density="compact"
+          placeholder="Search activities..."
+          prepend-inner-icon="ri-search-line"
+          class="search-field me-4"
+          hide-details
+        />
+        <VSelect
+          v-model="selectedType"
+          :items="[
+            { title: 'All Activities', value: 'all' },
+            { title: 'Created', value: 'create' },
+            { title: 'Updated', value: 'update' },
+            { title: 'Deleted', value: 'delete' }
+          ]"
+          density="compact"
+          class="type-select me-4"
+          hide-details
+        />
         <VBtn
-          color="secondary"
+          color="primary"
           @click="fetchActivities"
           :loading="loading"
+          elevation="1"
         >
-          <VIcon
-            start
-            icon="ri-refresh-line"
-          />
+          <VIcon start icon="ri-refresh-line" />
           Refresh
         </VBtn>
-      </VCardTitle>
+      </div>
+    </VCardTitle>
 
-      <VCardText>
-        <!-- Error Alert -->
-        <VAlert
-          v-if="error"
-          type="error"
-          class="mb-4"
-          closable
-          @click:close="error = null"
-        >
-          {{ error }}
-        </VAlert>
-        
-        <!-- Loading Spinner -->
+    <VDivider />
+
+    <VCardText class="pa-6">
+      <!-- Error Alert -->
+      <VAlert
+        v-if="error"
+        type="error"
+        variant="tonal"
+        class="mb-4"
+        closable
+        @click:close="error = null"
+      >
+        <template v-slot:prepend>
+          <VIcon icon="ri-error-warning-line" />
+        </template>
+        {{ error }}
+      </VAlert>
+      
+      <!-- Loading State -->
+      <div v-if="loading" class="d-flex justify-center align-center pa-12">
         <VProgressCircular
-          v-if="loading"
           indeterminate
           color="primary"
-          class="d-flex justify-center my-4"
+          size="64"
         />
+      </div>
 
-        <!-- Activities List -->
-        <div v-if="!loading && activities.length">
-          <VCard
-            v-for="activity in activities"
-            :key="activity.id"
-            class="mb-4 activity-card"
-          >
-            <VCardTitle class="activity-title">{{ activity.description }}</VCardTitle>
-            <VCardText>
-              <div class="activity-changes">
-                <strong>Changes:</strong> 
-                <div v-if="activity.changes.before && Object.keys(activity.changes.before).length">
-                  <strong>Before:</strong>
-                  <ul>
-                    <li v-for="(value, key) in activity.changes.before" :key="key">
-                      {{ key.charAt(0).toUpperCase() + key.slice(1) }}: {{ value }}
-                    </li>
-                  </ul>
-                </div>
-                <div v-if="activity.changes.after && Object.keys(activity.changes.after).length">
-                  <strong>After:</strong>
-                  <ul>
-                    <li v-for="(value, key) in activity.changes.after" :key="key">
-                      {{ key.charAt(0).toUpperCase() + key.slice(1) }}: {{ value }}
-                    </li>
-                  </ul>
+      <!-- Activities Timeline -->
+      <div v-else-if="filteredActivities.length" class="activities-timeline">
+        <div
+          v-for="(activity, index) in filteredActivities"
+          :key="activity.id"
+          class="timeline-item"
+          :class="{ 'last-item': index === filteredActivities.length - 1 }"
+        >
+          <div class="timeline-icon" :class="`bg-${getActivityTypeInfo(activity).color}`">
+            <VIcon :icon="getActivityTypeInfo(activity).icon" color="white" size="small" />
+          </div>
+          
+          <VCard class="timeline-content" elevation="1">
+            <div class="d-flex justify-space-between align-center mb-2">
+              <div class="font-weight-medium">{{ activity.description }}</div>
+              <VChip
+                :color="getActivityTypeInfo(activity).color"
+                size="small"
+                class="ms-2"
+                variant="tonal"
+              >
+                {{ getActivityTypeInfo(activity).color.toUpperCase() }}
+              </VChip>
+            </div>
+
+            <div class="changes-section" v-if="activity.changes">
+              <div v-if="activity.changes.before && Object.keys(activity.changes.before).length" class="changes-block">
+                <div class="changes-title">Before:</div>
+                <div 
+                  v-for="(value, key) in activity.changes.before" 
+                  :key="key"
+                  class="change-item"
+                >
+                  <span class="change-key">{{ key }}:</span>
+                  <span class="change-value">{{ value }}</span>
                 </div>
               </div>
-              <div class="activity-causer">
-                <strong>Causer:</strong> {{ activity.causer?.name || 'Unknown' }}
+              
+              <VDivider v-if="activity.changes.before && activity.changes.after" vertical class="mx-4" />
+
+              <div v-if="activity.changes.after && Object.keys(activity.changes.after).length" class="changes-block">
+                <div class="changes-title">After:</div>
+                <div 
+                  v-for="(value, key) in activity.changes.after" 
+                  :key="key"
+                  class="change-item"
+                >
+                  <span class="change-key">{{ key }}:</span>
+                  <span class="change-value">{{ value }}</span>
+                </div>
               </div>
-              <div class="activity-date">{{ new Date(activity.created_at).toLocaleString() }}</div>
-            </VCardText>
+            </div>
+
+            <div class="meta-section">
+              <div class="d-flex align-center">
+                <VAvatar size="24" class="me-2">
+                  <VImg src="https://api.dicebear.com/7.x/initials/svg?seed=JD" />
+                </VAvatar>
+                <span class="font-weight-medium">{{ activity.causer?.name || 'Unknown' }}</span>
+              </div>
+              <div class="timestamp">
+                <VIcon icon="ri-time-line" size="small" class="me-1" />
+                {{ formatTimestamp(activity.created_at) }}
+              </div>
+            </div>
           </VCard>
         </div>
+      </div>
 
-        <!-- No Activities Message -->
-        <VAlert
-          v-if="!loading && !activities.length"
-          type="info"
-          class="my-4"
-        >
-          No activities found.
-        </VAlert>
-      </VCardText>
-    </VCard>
-  </div>
+      <!-- Empty State -->
+      <VAlert
+        v-else
+        type="info"
+        variant="tonal"
+        class="my-4"
+      >
+        <template v-slot:prepend>
+          <VIcon icon="ri-information-line" />
+        </template>
+        No activities found matching your criteria.
+      </VAlert>
+    </VCardText>
+  </VCard>
 </template>
 
 <style scoped>
-.elevation-2 {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 10%);
+.activity-log-card {
+  overflow: hidden;
+  border-radius: 12px;
 }
 
-.v-btn {
-  transition: background-color 0.3s ease;
+.search-field {
+  max-inline-size: 250px;
 }
 
-.v-btn:hover {
-  background-color: rgba(0, 0, 0, 10%);
+.type-select {
+  max-inline-size: 150px;
 }
 
-.activity-card {
+.activities-timeline {
+  position: relative;
+  padding-block: 16px;
+  padding-inline: 0;
+}
+
+.timeline-item {
+  position: relative;
+  display: flex;
+  padding-block-end: 32px;
+}
+
+.timeline-item::before {
+  position: absolute;
+  background: #e0e0e0;
+  content: "";
+  inline-size: 2px;
+  inset-block: 30px 0;
+  inset-inline-start: 15px;
+}
+
+.timeline-item.last-item::before {
+  display: none;
+}
+
+.timeline-icon {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  block-size: 32px;
+  inline-size: 32px;
+  margin-inline-end: 16px;
+}
+
+.timeline-content {
+  flex: 1;
   padding: 16px;
-  border: 1px solid #e0e0e0;
   border-radius: 8px;
+  background: white;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.activity-title {
-  font-weight: bold;
+.timeline-content:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 10%) !important;
+  transform: translateX(4px);
+}
+
+.changes-section {
+  display: flex;
+  padding: 12px;
+  border-radius: 8px;
+  background: #f5f5f5;
+  font-size: 0.9rem;
+  margin-block: 12px;
+  margin-inline: 0;
+}
+
+.changes-block {
+  flex: 1;
+}
+
+.changes-title {
+  color: #666;
+  font-weight: 600;
   margin-block-end: 8px;
 }
 
-.activity-changes {
-  margin-block-end: 8px;
-}
-
-.activity-causer {
-  margin-block-end: 8px;
-}
-
-.activity-date {
-  color: #757575;
-}
-
-ul {
-  list-style-type: disc;
-  padding-inline-start: 16px;
-}
-
-li {
+.change-item {
+  display: flex;
   margin-block-end: 4px;
+}
+
+.change-key {
+  color: #666;
+  font-weight: 500;
+  margin-inline-end: 8px;
+}
+
+.change-value {
+  color: #333;
+}
+
+.meta-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  margin-block-start: 12px;
+}
+
+.timestamp {
+  display: flex;
+  align-items: center;
+  color: #666;
+}
+
+/* Color utilities */
+.bg-success {
+  background-color: #4caf50;
+}
+
+.bg-info {
+  background-color: #2196f3;
+}
+
+.bg-error {
+  background-color: #f44336;
+}
+
+.bg-primary {
+  background-color: #6200ea;
 }
 </style>
