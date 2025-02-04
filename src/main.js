@@ -1,8 +1,9 @@
 import App from '@/App.vue'
 import { useAuthStore } from '@/stores/useAuthStore'
 import { registerPlugins } from '@core/utils/plugins'
+import 'chartkick/chart.js'
 import { createApp } from 'vue'
-// import router from './router'
+import VueChartkick from 'vue-chartkick'
 import { pinia } from './stores'
 
 // Styles
@@ -14,7 +15,7 @@ const app = createApp(App)
 
 // Create and use Pinia
 app.use(pinia)
-// app.use(router)
+app.use(VueChartkick)
 // Initialize auth state
 const authStore = useAuthStore()
 authStore.initializeAuth()

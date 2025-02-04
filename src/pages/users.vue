@@ -1,13 +1,35 @@
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { useRolesStore } from '../stores/roles'
 import { useUsersStore } from '../stores/users'
 
 const usersStore = useUsersStore()
+const rolesStore = useRolesStore()
 
-// Computed properties from store
+// Computed properties from stores
 const users = computed(() => usersStore.users)
-const loading = computed(() => usersStore.loading)
+const roles = computed(() => rolesStore.roles)
+const loading = computed(() => usersStore.loading || rolesStore.loading)
 const error = computed(() => usersStore.error)
+
+// Form state
+const formDialog = ref(false)
+const formMode = ref('create')
+const formLoading = ref(false)
+const formErrors = ref({})
+const formData = ref({
+  name: '',
+  email: '',
+  password: '',
+  password_confirmation: '',
+  roles: []
+})
+
+// Delete dialog state
+const deleteDialog = ref(false)
+const deleteLoading = ref(false)
+const deleteError = ref(null)
+const currentUser = ref(null)
 
 // For pagination
 const currentPage = computed({
@@ -21,7 +43,7 @@ const headers = [
   { title: 'ID', key: 'id', sortable: true },
   { title: 'Name', key: 'name', sortable: true },
   { title: 'Email', key: 'email', sortable: true },
-  { title: 'Created At', key: 'created_at', sortable: true },
+  { title: 'Roles', key: 'roles', sortable: false },
   { title: 'Actions', key: 'actions', sortable: false },
 ]
 
@@ -30,24 +52,86 @@ const fetchUsers = (page = 1) => {
   usersStore.fetchUsers(page)
 }
 
+const resetForm = () => {
+  formData.value = {
+    name: '',
+    email: '',
+    password: '',
+    password_confirmation: '',
+    roles: []
+  }
+  formErrors.value = {}
+}
+
+const handleCreateUser = () => {
+  formMode.value = 'create'
+  resetForm()
+  formDialog.value = true
+}
+
 const handleEditUser = (user) => {
-  // Implement edit user functionality
+  formMode.value = 'edit'
+  formData.value = {
+    ...user,
+    password: '',
+    password_confirmation: '',
+    roles: user.roles || []
+  }
+  formDialog.value = true
 }
 
 const handleDeleteUser = (user) => {
-  // Implement delete user functionality
+  currentUser.value = user
+  deleteDialog.value = true
 }
 
-// Utility functions
-const formatDate = (date) => {
-  return new Date(date).toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  })
+const handleFormSubmit = async () => {
+  try {
+    formLoading.value = true
+    formErrors.value = {}
+
+    const payload = { ...formData.value }
+    if (formMode.value === 'edit' && !payload.password) {
+      delete payload.password
+      delete payload.password_confirmation
+    }
+
+    if (formMode.value === 'create') {
+      await usersStore.createUser(payload)
+    } else {
+      await usersStore.updateUser(payload.id, payload)
+    }
+
+    formDialog.value = false
+    fetchUsers(currentPage.value)
+  } catch (error) {
+    if (error.response?.status === 422) {
+      formErrors.value = error.response.data.errors
+    } else {
+      console.error('Form submission error:', error)
+    }
+  } finally {
+    formLoading.value = false
+  }
 }
 
-onMounted(() => {
+const handleDeleteConfirm = async () => {
+  try {
+    deleteLoading.value = true
+    deleteError.value = null
+
+    await usersStore.deleteUser(currentUser.value.id)
+    deleteDialog.value = false
+  } catch (error) {
+    deleteError.value = error.response?.data?.message || 'Error deleting user'
+  } finally {
+    deleteLoading.value = false
+  }
+}
+
+// Load initial data
+onMounted(async () => {
+  await rolesStore.fetchRoles() // Load roles for the select input
   fetchUsers()
 })
 </script>
@@ -55,6 +139,7 @@ onMounted(() => {
 <template>
   <div>
     <VCard class="elevation-2">
+      <!-- Card title and buttons remain the same -->
       <VCardTitle class="d-flex justify-space-between align-center">
         <h5 class="text-h5">
           Users List
@@ -130,7 +215,17 @@ onMounted(() => {
               <td>{{ user.id }}</td>
               <td>{{ user.name }}</td>
               <td>{{ user.email }}</td>
-              <td>{{ formatDate(user.created_at) }}</td>
+              <td>
+                <VChip
+                  v-for="role in user.roles"
+                  :key="role"
+                  size="small"
+                  class="me-1"
+                  color="primary"
+                >
+                  {{ role }}
+                </VChip>
+              </td>
               <td>
                 <VBtn
                   icon
@@ -209,6 +304,28 @@ onMounted(() => {
                     :error-messages="formErrors.password"
                   />
                 </VCol>
+
+                <VCol cols="12">
+                  <VTextField
+                    v-model="formData.password_confirmation"
+                    label="Confirm Password"
+                    type="password"
+                  />
+                </VCol>
+
+                <VCol cols="12">
+                  <VSelect
+                    v-model="formData.roles"
+                    :items="roles"
+                    item-title="name"
+                    item-value="name"
+                    label="Roles"
+                    multiple
+                    chips
+                    closable-chips
+                    :error-messages="formErrors.roles"
+                  />
+                </VCol>
               </VRow>
             </VContainer>
           </VForm>
@@ -234,7 +351,7 @@ onMounted(() => {
       </VCard>
     </VDialog>
 
-    <!-- Delete Dialog -->
+    <!-- Delete Dialog remains the same -->
     <VDialog
       v-model="deleteDialog"
       max-width="500px"

@@ -45,6 +45,7 @@
     "unplugin-vue-define-options": "1.4.3",
     "vue": "3.4.25",
     "vue-chartjs": "5.3.1",
+    "vue-chartkick": "^1.1.0",
     "vue-flatpickr-component": "11.0.5",
     "vue-i18n": "9.13.1",
     "vue-prism-component": "2.0.0",
