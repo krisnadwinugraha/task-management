@@ -31,6 +31,10 @@ const userLoading = computed(() => usersStore.loading)
 const searchQuery = ref('')
 const selectedStatus = ref('all')
 
+// Pagination
+const currentPage = ref(1)
+const itemsPerPage = ref(5)
+
 // Filtered tasks
 const filteredTasks = computed(() => {
   return tasks.value.filter(task => {
@@ -40,6 +44,21 @@ const filteredTasks = computed(() => {
     const matchesStatus = selectedStatus.value === 'all' || task.status === selectedStatus.value
     return matchesSearch && matchesStatus
   })
+})
+
+// Paginated tasks
+const paginatedTasks = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  const end = start + itemsPerPage.value
+  return filteredTasks.value.slice(start, end)
+})
+
+// Total pages
+const totalPages = computed(() => Math.ceil(filteredTasks.value.length / itemsPerPage.value))
+
+// Reset pagination when filters change
+watch([searchQuery, selectedStatus], () => {
+  currentPage.value = 1
 })
 
 // Form data
@@ -97,10 +116,6 @@ const handleEditTask = async (task) => {
 const handleDeleteTask = (task) => {
   tasksStore.currentTask = task
   tasksStore.deleteDialog = true
-}
-
-const handleDeleteConfirm = () => {
-  tasksStore.deleteTask(currentTask.value.id)
 }
 
 const handleFormSubmit = () => {
@@ -226,10 +241,10 @@ onMounted(() => {
       <!-- Tasks Timeline -->
       <div v-else-if="filteredTasks.length" class="tasks-timeline">
         <div
-          v-for="(task, index) in filteredTasks"
+          v-for="(task, index) in paginatedTasks"
           :key="task.id"
           class="timeline-item"
-          :class="{ 'last-item': index === filteredTasks.length - 1 }"
+          :class="{ 'last-item': index === paginatedTasks.length - 1 }"
         >
           <div class="timeline-icon" :class="`bg-${statusConfig[task.status].color}`">
             <VIcon :icon="statusConfig[task.status].icon" color="white" size="small" />
@@ -303,6 +318,17 @@ onMounted(() => {
               </div>
             </div>
           </VCard>
+        </div>
+
+        <!-- Pagination -->
+        <div class="d-flex justify-center align-center mt-6">
+          <VPagination
+            v-if="totalPages > 1"
+            v-model="currentPage"
+            :length="totalPages"
+            :total-visible="7"
+            rounded="circle"
+          />
         </div>
       </div>
 
@@ -478,6 +504,7 @@ onMounted(() => {
     </VDialog>
   </VCard>
 </template>
+
 
 <style scoped>
 .tasks-card {

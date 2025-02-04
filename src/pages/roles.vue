@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRolesStore } from '../stores/roles'
 
 const rolesStore = useRolesStore()
@@ -10,6 +10,10 @@ const loading = computed(() => rolesStore.loading)
 const error = computed(() => rolesStore.error)
 const permissions = computed(() => rolesStore.permissions)
 
+// Search and filter
+const searchQuery = ref('')
+const selectedPermission = ref('all')
+
 // For pagination
 const currentPage = computed({
   get: () => rolesStore.pagination.currentPage,
@@ -17,13 +21,22 @@ const currentPage = computed({
 })
 const totalPages = computed(() => rolesStore.pagination.totalPages)
 
-// Table headers
-const headers = [
-  { title: 'ID', key: 'id', sortable: true },
-  { title: 'Name', key: 'name', sortable: true },
-  { title: 'Created At', key: 'created_at', sortable: true },
-  { title: 'Actions', key: 'actions', sortable: false },
-]
+// Role action types with their corresponding icons and colors
+const roleActionTypes = {
+  create: { icon: 'ri-shield-user-line', color: 'success' },
+  edit: { icon: 'ri-shield-keyhole-line', color: 'info' },
+  delete: { icon: 'ri-shield-cross-line', color: 'error' }
+}
+
+// Filtered roles based on search and selected permission
+const filteredRoles = computed(() => {
+  return roles.value.filter(role => {
+    const matchesSearch = role.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+    const matchesPermission = selectedPermission.value === 'all' || 
+      (role.permissions && role.permissions.includes(selectedPermission.value))
+    return matchesSearch && matchesPermission
+  })
+})
 
 // Methods
 const fetchRoles = (page = 1) => {
@@ -45,7 +58,7 @@ const handleEditRole = async (role) => {
   rolesStore.currentRole = role
   rolesStore.formData = {
     ...role,
-    permissions: [...role.permissions] // Create a new array with the permission names
+    permissions: [...role.permissions]
   }
   rolesStore.formDialog = true
   await rolesStore.fetchPermissions()
@@ -61,7 +74,6 @@ const handleDeleteConfirm = () => {
 }
 
 const handleFormSubmit = () => {
-  // The form data is already in the correct format
   const formData = {
     name: rolesStore.formData.name,
     permissions: rolesStore.formData.permissions
@@ -77,7 +89,6 @@ const handleFormSubmit = () => {
   }
 }
 
-// Utility functions
 const formatDate = (date) => {
   return new Date(date).toLocaleDateString('en-GB', {
     day: '2-digit',
@@ -86,12 +97,10 @@ const formatDate = (date) => {
   })
 }
 
-// Updated helper function to check if permission is selected using name
 const isPermissionSelected = (permissionName) => {
   return rolesStore.formData.permissions.includes(permissionName)
 }
 
-// Updated helper function to handle permission toggle using name
 const togglePermission = (permissionName) => {
   const permissions = rolesStore.formData.permissions
   const index = permissions.indexOf(permissionName)
@@ -105,188 +114,254 @@ const togglePermission = (permissionName) => {
   rolesStore.formData.permissions = [...permissions]
 }
 
+// Load initial data
 onMounted(() => {
   fetchRoles()
 })
 </script>
 
 <template>
-  <div>
-    <VCard class="elevation-2">
-      <VCardTitle class="d-flex justify-space-between align-center">
-        <h5 class="text-h5">
-          Roles List
-        </h5>
-        <div>
-          <VBtn
-            color="primary"
-            class="me-2"
-            @click="handleCreateRole"
-          >
-            <VIcon
-              start
-              icon="ri-add-line"
-            />
-            New Role
-          </VBtn>
-          <VBtn
-            color="secondary"
-            @click="() => fetchRoles(currentPage)"
-            :loading="loading"
-          >
-            <VIcon
-              start
-              icon="ri-refresh-line"
-            />
-            Refresh
-          </VBtn>
-        </div>
-      </VCardTitle>
-
-      <VCardText>
-        <!-- Error Alert -->
-        <VAlert
-          v-if="error"
-          type="error"
-          class="mb-4"
-          closable
-          @click:close="error = null"
+  <VCard class="role-management-card">
+    <VCardTitle class="d-flex justify-space-between align-center pa-6">
+      <div class="d-flex align-center">
+        <VIcon icon="ri-shield-star-line" size="large" class="me-3" />
+        <h5 class="text-h5 font-weight-bold mb-0">Role Management</h5>
+      </div>
+      <div class="d-flex align-center">
+        <VTextField
+          v-model="searchQuery"
+          density="compact"
+          placeholder="Search roles..."
+          prepend-inner-icon="ri-search-line"
+          class="search-field me-4"
+          hide-details
+        />
+        <VSelect
+          v-model="selectedPermission"
+          :items="[
+            { title: 'All Permissions', value: 'all' },
+            ...permissions.map(permission => ({
+              title: permission.name,
+              value: permission.name
+            }))
+          ]"
+          density="compact"
+          class="permission-select me-4"
+          hide-details
+        />
+        <VBtn
+          color="success"
+          class="me-2"
+          elevation="1"
+          @click="handleCreateRole"
         >
-          {{ error }}
-        </VAlert>
+          <VIcon start :icon="roleActionTypes.create.icon" />
+          New Role
+        </VBtn>
+        <VBtn
+          color="primary"
+          @click="() => fetchRoles(currentPage)"
+          :loading="loading"
+          elevation="1"
+        >
+          <VIcon start icon="ri-refresh-line" />
+          Refresh
+        </VBtn>
+      </div>
+    </VCardTitle>
 
-        <!-- Loading Spinner -->
+    <VDivider />
+
+    <VCardText class="pa-6">
+      <!-- Error Alert -->
+      <VAlert
+        v-if="error"
+        type="error"
+        variant="tonal"
+        class="mb-4"
+        closable
+        @click:close="error = null"
+      >
+        <template v-slot:prepend>
+          <VIcon icon="ri-error-warning-line" />
+        </template>
+        {{ error }}
+      </VAlert>
+
+      <!-- Loading State -->
+      <div v-if="loading" class="d-flex justify-center align-center pa-12">
         <VProgressCircular
-          v-if="loading"
           indeterminate
           color="primary"
-          class="d-flex justify-center my-4"
+          size="64"
         />
+      </div>
 
-        <!-- Table -->
-        <VTable
-          v-if="!loading"
-          hover
-          class="elevation-1"
+      <!-- Roles List -->
+      <div v-else-if="filteredRoles.length" class="roles-list">
+        <VCard
+          v-for="role in filteredRoles"
+          :key="role.id"
+          class="role-card mb-4"
+          elevation="1"
         >
-          <thead>
-            <tr>
-              <th
-                v-for="header in headers"
-                :key="header.key"
-                class="text-uppercase"
-              >
-                {{ header.title }}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="role in roles"
-              :key="role.id"
-            >
-              <td>{{ role.id }}</td>
-              <td>{{ role.name }}</td>
-              <td>{{ formatDate(role.created_at) }}</td>
-              <td>
-                <VBtn
-                  icon
-                  variant="text"
-                  size="small"
-                  color="primary"
-                  class="me-1"
-                  @click="handleEditRole(role)"
-                >
-                  <VIcon icon="ri-edit-line" />
-                </VBtn>
-                <VBtn
-                  icon
-                  variant="text"
-                  size="small"
-                  color="error"
-                  @click="handleDeleteRole(role)"
-                >
-                  <VIcon icon="ri-delete-bin-line" />
-                </VBtn>
-              </td>
-            </tr>
-          </tbody>
-        </VTable>
+          <div class="d-flex align-center pa-4">
+            <div class="role-icon me-4">
+              <VIcon
+                icon="ri-shield-star-line"
+                size="32"
+                color="primary"
+              />
+            </div>
+            
+            <div class="flex-grow-1">
+              <div class="d-flex align-center justify-space-between">
+                <div>
+                  <div class="d-flex align-center">
+                    <div class="text-h6">{{ role.name }}</div>
+                    <div class="text-caption text-medium-emphasis ms-4">
+                      Created {{ formatDate(role.created_at) }}
+                    </div>
+                  </div>
+                  <div class="d-flex flex-wrap mt-2">
+                    <VChip
+                      v-for="permission in role.permissions"
+                      :key="permission"
+                      color="primary"
+                      size="small"
+                      class="me-2 mb-2"
+                      variant="tonal"
+                    >
+                      {{ permission }}
+                    </VChip>
+                  </div>
+                </div>
+                <div class="d-flex align-center">
+                  <VBtn
+                    icon
+                    variant="text"
+                    color="info"
+                    class="me-2"
+                    @click="handleEditRole(role)"
+                  >
+                    <VIcon :icon="roleActionTypes.edit.icon" />
+                  </VBtn>
+                  <VBtn
+                    icon
+                    variant="text"
+                    color="error"
+                    @click="handleDeleteRole(role)"
+                  >
+                    <VIcon :icon="roleActionTypes.delete.icon" />
+                  </VBtn>
+                </div>
+              </div>
+            </div>
+          </div>
+        </VCard>
 
         <!-- Pagination -->
-        <div class="d-flex justify-end mt-4">
+        <div class="d-flex justify-center mt-6">
           <VPagination
             v-model="currentPage"
             :length="totalPages"
-            :total-visible="5"
+            :total-visible="7"
             @update:model-value="fetchRoles"
           />
         </div>
-      </VCardText>
-    </VCard>
+      </div>
+
+      <!-- Empty State -->
+      <VAlert
+        v-else
+        type="info"
+        variant="tonal"
+        class="my-4"
+      >
+        <template v-slot:prepend>
+          <VIcon icon="ri-information-line" />
+        </template>
+        No roles found matching your criteria.
+      </VAlert>
+    </VCardText>
 
     <!-- Form Dialog -->
     <VDialog
-    v-model="rolesStore.formDialog"
-    max-width="600px"
-    persistent
-  >
-    <VCard>
-      <VCardTitle>
-        {{ rolesStore.formMode === 'create' ? 'Create New Role' : 'Edit Role' }}
-      </VCardTitle>
+      v-model="rolesStore.formDialog"
+      max-width="600px"
+      persistent
+    >
+      <VCard>
+        <VCardTitle class="pa-6">
+          <div class="d-flex align-center">
+            <VIcon
+              :icon="roleActionTypes[rolesStore.formMode].icon"
+              :color="roleActionTypes[rolesStore.formMode].color"
+              size="large"
+              class="me-3"
+            />
+            {{ rolesStore.formMode === 'create' ? 'Create New Role' : 'Edit Role' }}
+          </div>
+        </VCardTitle>
 
-      <VCardText>
-        <VForm @submit.prevent="handleFormSubmit">
-          <VContainer>
-            <VRow>
-              <VCol cols="12">
-                <VTextField
-                  v-model="rolesStore.formData.name"
-                  label="Name"
-                  required
-                  :error-messages="rolesStore.formErrors.name"
-                />
-              </VCol>
+        <VDivider />
 
-              <VCol cols="12">
-                <div>
-                  <strong>Permissions:</strong>
-                  <VRow>
-                    <VCol cols="6" v-for="permission in permissions" :key="permission.id">
-                      <VCheckbox
-                        :model-value="isPermissionSelected(permission.name)"
-                        @update:model-value="togglePermission(permission.name)"
-                        :label="permission.name"
-                      />
-                    </VCol>
-                  </VRow>
-                </div>
-              </VCol>
-            </VRow>
-          </VContainer>
-        </VForm>
-      </VCardText>
+        <VCardText class="pa-6">
+          <VForm @submit.prevent="handleFormSubmit">
+            <VTextField
+              v-model="rolesStore.formData.name"
+              label="Role Name"
+              required
+              class="mb-4"
+              :error-messages="rolesStore.formErrors.name"
+            />
 
-      <VCardActions>
-        <VSpacer />
-        <VBtn
-          color="grey-darken-1"
-          variant="text"
-          @click="rolesStore.formDialog = false"
-        >
-          Cancel
-        </VBtn>
-        <VBtn
-          color="primary"
-          :loading="rolesStore.formLoading"
-          @click="handleFormSubmit"
-        >
-          {{ rolesStore.formMode === 'create' ? 'Create' : 'Save' }}
-        </VBtn>
-      </VCardActions>
-    </VCard>
-  </VDialog>
+            <div class="permissions-section">
+              <div class="text-h6 mb-4">Permissions</div>
+              <VRow>
+                <VCol
+                  v-for="permission in permissions"
+                  :key="permission.id"
+                  cols="12"
+                  sm="6"
+                >
+                  <VCheckbox
+                    :model-value="isPermissionSelected(permission.name)"
+                    @update:model-value="togglePermission(permission.name)"
+                    :label="permission.name"
+                    color="primary"
+                    density="comfortable"
+                  />
+                </VCol>
+              </VRow>
+            </div>
+          </VForm>
+        </VCardText>
+
+        <VDivider />
+
+        <VCardActions class="pa-6">
+          <VSpacer />
+          <VBtn
+            variant="tonal"
+            @click="rolesStore.formDialog = false"
+          >
+            Cancel
+          </VBtn>
+          <VBtn
+            :color="roleActionTypes[rolesStore.formMode].color"
+            :loading="rolesStore.formLoading"
+            @click="handleFormSubmit"
+          >
+            <VIcon
+              start
+              :icon="roleActionTypes[rolesStore.formMode].icon"
+            />
+            {{ rolesStore.formMode === 'create' ? 'Create Role' : 'Save Changes' }}
+          </VBtn>
+        </VCardActions>
+      </VCard>
+    </VDialog>
 
     <!-- Delete Dialog -->
     <VDialog
@@ -294,28 +369,42 @@ onMounted(() => {
       max-width="500px"
     >
       <VCard>
-        <VCardTitle class="text-h5">
-          Delete Role
+        <VCardTitle class="pa-6">
+          <div class="d-flex align-center">
+            <VIcon
+              :icon="roleActionTypes.delete.icon"
+              color="error"
+              size="large"
+              class="me-3"
+            />
+            Delete Role
+          </div>
         </VCardTitle>
 
-        <VCardText>
+        <VDivider />
+
+        <VCardText class="pa-6">
           <VAlert
             v-if="rolesStore.deleteError"
             type="error"
+            variant="tonal"
             class="mb-4"
           >
             {{ rolesStore.deleteError }}
           </VAlert>
 
-          Are you sure you want to delete the role "{{ rolesStore.currentRole?.name }}"?
-          This action cannot be undone.
+          <p class="text-body-1">
+            Are you sure you want to delete the role "{{ rolesStore.currentRole?.name }}"?
+            This action cannot be undone.
+          </p>
         </VCardText>
 
-        <VCardActions>
+        <VDivider />
+
+        <VCardActions class="pa-6">
           <VSpacer />
           <VBtn
-            color="grey-darken-1"
-            variant="text"
+            variant="tonal"
             @click="rolesStore.deleteDialog = false"
           >
             Cancel
@@ -325,36 +414,63 @@ onMounted(() => {
             :loading="rolesStore.deleteLoading"
             @click="handleDeleteConfirm"
           >
-            Delete
+            <VIcon
+              start
+              :icon="roleActionTypes.delete.icon"
+            />
+            Delete Role
           </VBtn>
         </VCardActions>
       </VCard>
     </VDialog>
-  </div>
+  </VCard>
 </template>
 
 <style scoped>
-.text-truncate {
-  display: inline-block;
+.role-management-card {
   overflow: hidden;
-  max-inline-size: 300px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  border-radius: 12px;
 }
 
-.elevation-2 {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 10%);
+.search-field {
+  max-inline-size: 250px;
 }
 
-.elevation-1 {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 10%);
+.permission-select {
+  max-inline-size: 200px;
 }
 
-.v-btn {
-  transition: background-color 0.3s ease;
+.role-card {
+  border-radius: 8px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.v-btn:hover {
-  background-color: rgba(0, 0, 0, 10%);
+.role-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 10%) !important;
+  transform: translateX(4px);
+}
+
+.permissions-section {
+  padding: 16px;
+  border-radius: 8px;
+  background-color: #f5f5f5;
+  margin-block-start: 16px;
+}
+
+/* Color utilities */
+.bg-success {
+  background-color: #4caf50;
+}
+
+.bg-info {
+  background-color: #2196f3;
+}
+
+.bg-error {
+  background-color: #f44336;
+}
+
+.bg-primary {
+  background-color: #6200ea;
 }
 </style>
