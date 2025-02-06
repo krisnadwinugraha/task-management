@@ -27,12 +27,16 @@ export const useTasksStore = defineStore('tasks', {
     async fetchTasks(page = 1) {
       try {
         this.loading = true
+        console.log('Fetching tasks for page:', page) // Debug log
         const response = await axios.get(`${import.meta.env.VITE_API_URL}/tasks?page=${page}`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Accept': 'application/json'
           }
         })
+        
+        console.log('API Response:', response.data) // Debug log
+        console.log('Pagination meta:', response.data.meta) // Debug log
         
         this.tasks = response.data.data
         this.pagination = {
@@ -42,6 +46,7 @@ export const useTasksStore = defineStore('tasks', {
           itemsPerPage: response.data.meta.per_page
         }
       } catch (error) {
+        console.error('API Error:', error) // Debug log
         this.error = `Error fetching tasks: ${error.response?.data?.message || error.message}`
       } finally {
         this.loading = false
@@ -69,12 +74,21 @@ export const useTasksStore = defineStore('tasks', {
       }
     },
 
+    // stores/tasks.js
     async updateTask({ id, taskData }) {
       try {
-        const plainTaskData = JSON.parse(JSON.stringify(taskData))
-        console.log('Plain task data:', plainTaskData)
         this.formLoading = true
-        await axios.put(`${import.meta.env.VITE_API_URL}/tasks/${id}`, plainTaskData, {
+        // Only send the fields that can be updated
+        const updateData = {
+          title: taskData.title,
+          description: taskData.description,
+          status: taskData.status,
+          priority: taskData.priority,
+          assigned_to: taskData.assigned_to,
+          due_date: taskData.due_date
+        }
+
+        await axios.put(`${import.meta.env.VITE_API_URL}/tasks/${id}`, updateData, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Accept': 'application/json'

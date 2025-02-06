@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useTasksStore } from '../stores/tasks'
 import { useUsersStore } from '../stores/users'
 
@@ -10,6 +10,27 @@ const usersStore = useUsersStore()
 const tasks = computed(() => tasksStore.tasks)
 const loading = computed(() => tasksStore.loading)
 const error = computed(() => tasksStore.error)
+const pagination = computed(() => tasksStore.pagination)
+
+// Search and filter
+const searchQuery = ref('')
+const selectedStatus = ref('all')
+
+// Pagination
+const currentPage = ref(1)
+const itemsPerPage = ref(10)
+
+// Filtered tasks
+const filteredTasks = computed(() => {
+  return tasks.value.filter(task => {
+    const matchesSearch = task.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      task.description.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+      (task.assigned_to?.name || '').toLowerCase().includes(searchQuery.value.toLowerCase())
+    const matchesStatus = selectedStatus.value === 'all' || task.status === selectedStatus.value
+    return matchesSearch && matchesStatus
+  })
+})
+
 const formDialog = computed({
   get: () => tasksStore.formDialog,
   set: (value) => tasksStore.formDialog = value
@@ -27,24 +48,7 @@ const currentTask = computed(() => tasksStore.currentTask)
 const users = computed(() => usersStore.users)
 const userLoading = computed(() => usersStore.loading)
 
-// Search and filter
-const searchQuery = ref('')
-const selectedStatus = ref('all')
 
-// Pagination
-const currentPage = ref(1)
-const itemsPerPage = ref(5)
-
-// Filtered tasks
-const filteredTasks = computed(() => {
-  return tasks.value.filter(task => {
-    const matchesSearch = task.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      task.description.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      (task.assigned_to?.name || '').toLowerCase().includes(searchQuery.value.toLowerCase())
-    const matchesStatus = selectedStatus.value === 'all' || task.status === selectedStatus.value
-    return matchesSearch && matchesStatus
-  })
-})
 
 // Paginated tasks
 const paginatedTasks = computed(() => {
@@ -58,8 +62,14 @@ const totalPages = computed(() => Math.ceil(filteredTasks.value.length / itemsPe
 
 // Reset pagination when filters change
 watch([searchQuery, selectedStatus], () => {
-  currentPage.value = 1
+  if (pagination.value.currentPage !== 1) {
+    handlePageChange(1)
+  }
 })
+
+const handlePageChange = (page) => {
+  tasksStore.fetchTasks(page)
+}
 
 // Form data
 const formData = ref({
@@ -102,17 +112,6 @@ const handleCreateTask = async () => {
   await usersStore.fetchUsers()
 }
 
-const handleEditTask = async (task) => {
-  tasksStore.formMode = 'edit'
-  tasksStore.currentTask = task
-  formData.value = {
-    ...task,
-    due_date: task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : null
-  }
-  tasksStore.formDialog = true
-  await usersStore.fetchUsers()
-}
-
 const handleDeleteTask = (task) => {
   tasksStore.currentTask = task
   tasksStore.deleteDialog = true
@@ -120,8 +119,12 @@ const handleDeleteTask = (task) => {
 
 const handleFormSubmit = () => {
   const cleanTaskData = {
-    ...formData.value,
-    assigned_to: formData.value.assigned_to?.id || null,
+    title: formData.value.title,
+    description: formData.value.description,
+    status: formData.value.status,
+    priority: formData.value.priority,
+    assigned_to: formData.value.assigned_to?.id || formData.value.assigned_to || null,
+    due_date: formData.value.due_date
   }
 
   if (formMode.value === 'create') {
@@ -132,6 +135,19 @@ const handleFormSubmit = () => {
       taskData: cleanTaskData
     })
   }
+}
+
+const handleEditTask = async (task) => {
+  tasksStore.formMode = 'edit'
+  tasksStore.currentTask = task
+  formData.value = {
+    ...task,
+    // Ensure assigned_to is set to the user ID when editing
+    assigned_to: task.assigned_to?.id || null,
+    due_date: task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : null
+  }
+  tasksStore.formDialog = true
+  await usersStore.fetchUsers()
 }
 
 const formatDate = (date) => {
@@ -157,7 +173,7 @@ const formatTimeAgo = (timestamp) => {
 }
 
 onMounted(() => {
-  tasksStore.fetchTasks()
+  tasksStore.fetchTasks(1)
 })
 </script>
 
@@ -322,14 +338,15 @@ onMounted(() => {
 
         <!-- Pagination -->
         <div class="d-flex justify-center align-center mt-6">
-          <VPagination
-            v-if="totalPages > 1"
-            v-model="currentPage"
-            :length="totalPages"
-            :total-visible="7"
-            rounded="circle"
-          />
-        </div>
+        <VPagination
+          v-if="pagination.totalPages > 1"
+          v-model="pagination.currentPage"
+          :length="pagination.totalPages"
+          :total-visible="7"
+          rounded="circle"
+          @update:model-value="handlePageChange"
+        />
+      </div>
       </div>
 
       <!-- Empty State -->
@@ -422,6 +439,7 @@ onMounted(() => {
                     :loading="userLoading"
                     clearable
                     :error-messages="formErrors.assigned_to"
+                    return-object
                   >
                     <template #no-data>
                       <div class="pa-2">No users available</div>

@@ -8,6 +8,11 @@ const error = ref(null)
 const searchQuery = ref('')
 const selectedType = ref('all')
 
+// Pagination state
+const currentPage = ref(1)
+const itemsPerPage = ref(10)
+const totalItems = ref(0)
+
 // Activity types with their corresponding icons and colors
 const activityTypes = {
   create: { icon: 'ri-add-circle-line', color: 'success' },
@@ -17,13 +22,23 @@ const activityTypes = {
 }
 
 const filteredActivities = computed(() => {
-  return activities.value.filter(activity => {
+  const filtered = activities.value.filter(activity => {
     const matchesSearch = activity.description.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       activity.causer?.name.toLowerCase().includes(searchQuery.value.toLowerCase())
     const matchesType = selectedType.value === 'all' || activity.type === selectedType.value
     return matchesSearch && matchesType
   })
+  
+  totalItems.value = filtered.length
+  
+  // Calculate pagination slice
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  const end = start + itemsPerPage.value
+  
+  return filtered.slice(start, end)
 })
+
+const totalPages = computed(() => Math.ceil(totalItems.value / itemsPerPage.value))
 
 const fetchActivities = async () => {
   loading.value = true
@@ -31,6 +46,7 @@ const fetchActivities = async () => {
   try {
     const response = await axios.get('http://127.0.0.1:8000/api/activities')
     activities.value = response.data.activities
+    currentPage.value = 1 // Reset to first page when fetching new data
   } catch (err) {
     error.value = 'Failed to load activities'
     console.error('Fetch activities error:', err)
@@ -64,6 +80,15 @@ const formatTimestamp = (timestamp) => {
     year: 'numeric'
   })
 }
+
+const handlePageChange = (page) => {
+  currentPage.value = page
+}
+
+// Reset pagination when filters change
+watch([searchQuery, selectedType], () => {
+  currentPage.value = 1
+})
 
 onMounted(() => {
   fetchActivities()
@@ -206,9 +231,20 @@ onMounted(() => {
         </div>
       </div>
 
+      <!-- Pagination -->
+      <div v-if="totalPages > 1" class="d-flex justify-center align-center mt-6">
+        <VPagination
+          v-model="currentPage"
+          :length="totalPages"
+          :total-visible="7"
+          rounded="circle"
+          @update:model-value="handlePageChange"
+        />
+      </div>
+
       <!-- Empty State -->
       <VAlert
-        v-else
+        v-else-if="!filteredActivities.length"
         type="info"
         variant="tonal"
         class="my-4"
