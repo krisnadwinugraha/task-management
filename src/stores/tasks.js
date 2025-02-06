@@ -27,16 +27,12 @@ export const useTasksStore = defineStore('tasks', {
     async fetchTasks(page = 1) {
       try {
         this.loading = true
-        console.log('Fetching tasks for page:', page) // Debug log
         const response = await axios.get(`${import.meta.env.VITE_API_URL}/tasks?page=${page}`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Accept': 'application/json'
           }
         })
-        
-        console.log('API Response:', response.data) // Debug log
-        console.log('Pagination meta:', response.data.meta) // Debug log
         
         this.tasks = response.data.data
         this.pagination = {
