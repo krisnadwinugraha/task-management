@@ -7,6 +7,8 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
+    ActivityCard: typeof import('./src/components/Dashboard/ActivityCard.vue')['default']
+    ActivityFeed: typeof import('./src/components/Dashboard/ActivityFeed.vue')['default']
     AddAuthenticatorAppDialog: typeof import('./src/components/dialogs/AddAuthenticatorAppDialog.vue')['default']
     AddEditAddressDialog: typeof import('./src/components/dialogs/AddEditAddressDialog.vue')['default']
     AddEditPermissionDialog: typeof import('./src/components/dialogs/AddEditPermissionDialog.vue')['default']
@@ -36,6 +38,8 @@ declare module 'vue' {
     CustomRadios: typeof import('./src/@core/components/app-form-elements/CustomRadios.vue')['default']
     CustomRadiosWithIcon: typeof import('./src/@core/components/app-form-elements/CustomRadiosWithIcon.vue')['default']
     CustomRadiosWithImage: typeof import('./src/@core/components/app-form-elements/CustomRadiosWithImage.vue')['default']
+    DashboardStat: typeof import('./src/components/Dashboard/DashboardStat.vue')['default']
+    DashboardStats: typeof import('./src/components/Dashboard/DashboardStats.vue')['default']
     DemoAlertBasic: typeof import('./src/components/alert/DemoAlertBasic.vue')['default']
     DemoAlertBorder: typeof import('./src/components/alert/DemoAlertBorder.vue')['default']
     DemoAlertClosable: typeof import('./src/components/alert/DemoAlertClosable.vue')['default']
@@ -63,9 +67,11 @@ declare module 'vue' {
     ScrollToTop: typeof import('./src/@core/components/ScrollToTop.vue')['default']
     ShareProjectDialog: typeof import('./src/components/dialogs/ShareProjectDialog.vue')['default']
     Shortcuts: typeof import('./src/@core/components/Shortcuts.vue')['default']
+    StatCard: typeof import('./src/components/Dashboard/StatCard.vue')['default']
     TheCustomizer: typeof import('./src/@core/components/TheCustomizer.vue')['default']
     ThemeSwitcher: typeof import('./src/@core/components/ThemeSwitcher.vue')['default']
     TiptapEditor: typeof import('./src/@core/components/TiptapEditor.vue')['default']
+    TrendChart: typeof import('./src/components/Dashboard/TrendChart.vue')['default']
     TwoFactorAuthDialog: typeof import('./src/components/dialogs/TwoFactorAuthDialog.vue')['default']
     UserInfoEditDialog: typeof import('./src/components/dialogs/UserInfoEditDialog.vue')['default']
     UserUpgradePlanDialog: typeof import('./src/components/dialogs/UserUpgradePlanDialog.vue')['default']

@@ -1,151 +1,151 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+  import { computed, onMounted, ref } from 'vue'
 import { useRolesStore } from '../stores/roles'
 import { useUsersStore } from '../stores/users'
 
-const usersStore = useUsersStore()
-const rolesStore = useRolesStore()
+  const usersStore = useUsersStore()
+  const rolesStore = useRolesStore()
 
-// Computed properties from stores
-const users = computed(() => usersStore.users)
-const roles = computed(() => rolesStore.roles)
-const loading = computed(() => usersStore.loading || rolesStore.loading)
-const error = computed(() => usersStore.error)
+  // Computed properties from stores
+  const users = computed(() => usersStore.users)
+  const roles = computed(() => rolesStore.roles)
+  const loading = computed(() => usersStore.loading || rolesStore.loading)
+  const error = computed(() => usersStore.error)
 
-// Form state
-const formDialog = ref(false)
-const formMode = ref('create')
-const formLoading = ref(false)
-const formErrors = ref({})
-const searchQuery = ref('')
-const selectedRole = ref('all')
-const formData = ref({
-  name: '',
-  email: '',
-  password: '',
-  password_confirmation: '',
-  roles: []
-})
-
-// Delete dialog state
-const deleteDialog = ref(false)
-const deleteLoading = ref(false)
-const deleteError = ref(null)
-const currentUser = ref(null)
-
-// For pagination
-const currentPage = computed({
-  get: () => usersStore.pagination.currentPage,
-  set: (value) => usersStore.pagination = { ...usersStore.pagination, currentPage: value }
-})
-const totalPages = computed(() => usersStore.pagination.totalPages)
-
-// User action types with their corresponding icons and colors
-const userActionTypes = {
-  create: { icon: 'ri-user-add-line', color: 'success' },
-  edit: { icon: 'ri-user-settings-line', color: 'info' },
-  delete: { icon: 'ri-user-unfollow-line', color: 'error' }
-}
-
-// Filtered users based on search and role
-const filteredUsers = computed(() => {
-  return users.value.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.value.toLowerCase())
-    const matchesRole = selectedRole.value === 'all' || 
-      (user.roles && user.roles.includes(selectedRole.value))
-    return matchesSearch && matchesRole
-  })
-})
-
-// Methods
-const fetchUsers = (page = 1) => {
-  usersStore.fetchUsers(page)
-}
-
-const resetForm = () => {
-  formData.value = {
+  // Form state
+  const formDialog = ref(false)
+  const formMode = ref('create')
+  const formLoading = ref(false)
+  const formErrors = ref({})
+  const searchQuery = ref('')
+  const selectedRole = ref('all')
+  const formData = ref({
     name: '',
     email: '',
     password: '',
     password_confirmation: '',
     roles: []
+  })
+
+  // Delete dialog state
+  const deleteDialog = ref(false)
+  const deleteLoading = ref(false)
+  const deleteError = ref(null)
+  const currentUser = ref(null)
+
+  // For pagination
+  const currentPage = computed({
+    get: () => usersStore.pagination.currentPage,
+    set: (value) => usersStore.pagination = { ...usersStore.pagination, currentPage: value }
+  })
+  const totalPages = computed(() => usersStore.pagination.totalPages)
+
+  // User action types with their corresponding icons and colors
+  const userActionTypes = {
+    create: { icon: 'ri-user-add-line', color: 'success' },
+    edit: { icon: 'ri-user-settings-line', color: 'info' },
+    delete: { icon: 'ri-user-unfollow-line', color: 'error' }
   }
-  formErrors.value = {}
-}
 
-const handleCreateUser = () => {
-  formMode.value = 'create'
-  resetForm()
-  formDialog.value = true
-}
+  // Filtered users based on search and role
+  const filteredUsers = computed(() => {
+    return users.value.filter(user => {
+      const matchesSearch = user.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchQuery.value.toLowerCase())
+      const matchesRole = selectedRole.value === 'all' || 
+        (user.roles && user.roles.includes(selectedRole.value))
+      return matchesSearch && matchesRole
+    })
+  })
 
-const handleEditUser = (user) => {
-  formMode.value = 'edit'
-  formData.value = {
-    ...user,
-    password: '',
-    password_confirmation: '',
-    roles: user.roles || []
+  // Methods
+  const fetchUsers = (page = 1) => {
+    usersStore.fetchUsers(page)
   }
-  formDialog.value = true
-}
 
-const handleDeleteUser = (user) => {
-  currentUser.value = user
-  deleteDialog.value = true
-}
-
-const handleFormSubmit = async () => {
-  try {
-    formLoading.value = true
+  const resetForm = () => {
+    formData.value = {
+      name: '',
+      email: '',
+      password: '',
+      password_confirmation: '',
+      roles: []
+    }
     formErrors.value = {}
-
-    const payload = { ...formData.value }
-    if (formMode.value === 'edit' && !payload.password) {
-      delete payload.password
-      delete payload.password_confirmation
-    }
-
-    if (formMode.value === 'create') {
-      await usersStore.createUser(payload)
-    } else {
-      await usersStore.updateUser(payload.id, payload)
-    }
-
-    formDialog.value = false
-    fetchUsers(currentPage.value)
-  } catch (error) {
-    if (error.response?.status === 422) {
-      formErrors.value = error.response.data.errors
-    } else {
-      console.error('Form submission error:', error)
-    }
-  } finally {
-    formLoading.value = false
   }
-}
 
-const handleDeleteConfirm = async () => {
-  try {
-    deleteLoading.value = true
-    deleteError.value = null
-
-    await usersStore.deleteUser(currentUser.value.id)
-    deleteDialog.value = false
-    fetchUsers(currentPage.value)
-  } catch (error) {
-    deleteError.value = error.response?.data?.message || 'Error deleting user'
-  } finally {
-    deleteLoading.value = false
+  const handleCreateUser = () => {
+    formMode.value = 'create'
+    resetForm()
+    formDialog.value = true
   }
-}
 
-// Load initial data
-onMounted(async () => {
-  await rolesStore.fetchRoles()
-  fetchUsers()
-})
+  const handleEditUser = (user) => {
+    formMode.value = 'edit'
+    formData.value = {
+      ...user,
+      password: '',
+      password_confirmation: '',
+      roles: user.roles || []
+    }
+    formDialog.value = true
+  }
+
+  const handleDeleteUser = (user) => {
+    currentUser.value = user
+    deleteDialog.value = true
+  }
+
+  const handleFormSubmit = async () => {
+    try {
+      formLoading.value = true
+      formErrors.value = {}
+
+      const payload = { ...formData.value }
+      if (formMode.value === 'edit' && !payload.password) {
+        delete payload.password
+        delete payload.password_confirmation
+      }
+
+      if (formMode.value === 'create') {
+        await usersStore.createUser(payload)
+      } else {
+        await usersStore.updateUser(payload.id, payload)
+      }
+
+      formDialog.value = false
+      fetchUsers(currentPage.value)
+    } catch (error) {
+      if (error.response?.status === 422) {
+        formErrors.value = error.response.data.errors
+      } else {
+        console.error('Form submission error:', error)
+      }
+    } finally {
+      formLoading.value = false
+    }
+  }
+
+  const handleDeleteConfirm = async () => {
+    try {
+      deleteLoading.value = true
+      deleteError.value = null
+
+      await usersStore.deleteUser(currentUser.value.id)
+      deleteDialog.value = false
+      fetchUsers(currentPage.value)
+    } catch (error) {
+      deleteError.value = error.response?.data?.message || 'Error deleting user'
+    } finally {
+      deleteLoading.value = false
+    }
+  }
+
+  // Load initial data
+  onMounted(async () => {
+    await rolesStore.fetchRoles()
+    fetchUsers()
+  })
 </script>
 
 <template>
@@ -470,43 +470,43 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.user-management-card {
-  overflow: hidden;
-  border-radius: 12px;
-}
+  .user-management-card {
+    overflow: hidden;
+    border-radius: 12px;
+  }
 
-.search-field {
-  max-inline-size: 250px;
-}
+  .search-field {
+    max-inline-size: 250px;
+  }
 
-.role-select {
-  max-inline-size: 150px;
-}
+  .role-select {
+    max-inline-size: 150px;
+  }
 
-.user-card {
-  border-radius: 8px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
+  .user-card {
+    border-radius: 8px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
 
-.user-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 10%) !important;
-  transform: translateX(4px);
-}
+  .user-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 10%) !important;
+    transform: translateX(4px);
+  }
 
-/* Color utilities */
-.bg-success {
-  background-color: #4caf50;
-}
+  /* Color utilities */
+  .bg-success {
+    background-color: #4caf50;
+  }
 
-.bg-info {
-  background-color: #2196f3;
-}
+  .bg-info {
+    background-color: #2196f3;
+  }
 
-.bg-error {
-  background-color: #f44336;
-}
+  .bg-error {
+    background-color: #f44336;
+  }
 
-.bg-primary {
-  background-color: #6200ea;
-}
+  .bg-primary {
+    background-color: #6200ea;
+  }
 </style>
