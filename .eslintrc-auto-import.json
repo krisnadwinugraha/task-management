@@ -351,6 +351,7 @@
     "watchTriggerable": true,
     "watchWithFilter": true,
     "whenever": true,
-    "useDashboardData": true
+    "useDashboardData": true,
+    "useActivityLog": true
   }
 }

@@ -153,6 +153,7 @@ declare global {
   const urlValidator: typeof import('./src/@core/utils/validators.js')['urlValidator']
   const useAbs: typeof import('@vueuse/math')['useAbs']
   const useActiveElement: typeof import('@vueuse/core')['useActiveElement']
+  const useActivityLog: typeof import('./src/composables/useActivityLog.js')['default']
   const useAnimate: typeof import('@vueuse/core')['useAnimate']
   const useApi: typeof import('./src/composables/useApi.js')['useApi']
   const useArrayDifference: typeof import('@vueuse/core')['useArrayDifference']
@@ -506,6 +507,7 @@ declare module 'vue' {
     readonly urlValidator: UnwrapRef<typeof import('./src/@core/utils/validators.js')['urlValidator']>
     readonly useAbs: UnwrapRef<typeof import('@vueuse/math')['useAbs']>
     readonly useActiveElement: UnwrapRef<typeof import('@vueuse/core')['useActiveElement']>
+    readonly useActivityLog: UnwrapRef<typeof import('./src/composables/useActivityLog.js')['default']>
     readonly useAnimate: UnwrapRef<typeof import('@vueuse/core')['useAnimate']>
     readonly useApi: UnwrapRef<typeof import('./src/composables/useApi.js')['useApi']>
     readonly useArrayDifference: UnwrapRef<typeof import('@vueuse/core')['useArrayDifference']>
@@ -852,6 +854,7 @@ declare module '@vue/runtime-core' {
     readonly urlValidator: UnwrapRef<typeof import('./src/@core/utils/validators.js')['urlValidator']>
     readonly useAbs: UnwrapRef<typeof import('@vueuse/math')['useAbs']>
     readonly useActiveElement: UnwrapRef<typeof import('@vueuse/core')['useActiveElement']>
+    readonly useActivityLog: UnwrapRef<typeof import('./src/composables/useActivityLog.js')['default']>
     readonly useAnimate: UnwrapRef<typeof import('@vueuse/core')['useAnimate']>
     readonly useApi: UnwrapRef<typeof import('./src/composables/useApi.js')['useApi']>
     readonly useArrayDifference: UnwrapRef<typeof import('@vueuse/core')['useArrayDifference']>

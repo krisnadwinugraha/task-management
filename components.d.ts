@@ -9,6 +9,9 @@ declare module 'vue' {
   export interface GlobalComponents {
     ActivityCard: typeof import('./src/components/Dashboard/ActivityCard.vue')['default']
     ActivityFeed: typeof import('./src/components/Dashboard/ActivityFeed.vue')['default']
+    ActivityPagination: typeof import('./src/components/Activity/ActivityPagination.vue')['default']
+    ActivitySearch: typeof import('./src/components/Activity/ActivitySearch.vue')['default']
+    ActivityTimeline: typeof import('./src/components/Activity/ActivityTimeline.vue')['default']
     AddAuthenticatorAppDialog: typeof import('./src/components/dialogs/AddAuthenticatorAppDialog.vue')['default']
     AddEditAddressDialog: typeof import('./src/components/dialogs/AddEditAddressDialog.vue')['default']
     AddEditPermissionDialog: typeof import('./src/components/dialogs/AddEditPermissionDialog.vue')['default']
