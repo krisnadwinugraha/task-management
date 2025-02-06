@@ -117,6 +117,10 @@ const handleDeleteTask = (task) => {
   tasksStore.deleteDialog = true
 }
 
+const handleDeleteConfirm = () => {
+  tasksStore.deleteTask(currentTask.value.id)
+}
+
 const handleFormSubmit = () => {
   const cleanTaskData = {
     title: formData.value.title,
