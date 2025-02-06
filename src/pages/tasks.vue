@@ -527,137 +527,169 @@ onMounted(() => {
   </VCard>
 </template>
 
-
 <style scoped>
-.tasks-card {
-  overflow: hidden;
-  border-radius: 12px;
-}
+  .tasks-card {
+    overflow: hidden;
+    border: 1px solid rgba(var(--v-theme-border-color), var(--v-border-opacity));
+    border-radius: 12px;
+    background-color: rgb(var(--v-theme-surface));
+    box-shadow: 0 4px 6px -1px rgba(var(--v-shadow-key-umbra-color), var(--v-shadow-md-opacity));
+    color: rgb(var(--v-theme-on-surface));
+  }
 
-.search-field {
-  max-inline-size: 250px;
-}
+  .search-field {
+    max-inline-size: 250px;
+  }
 
-.status-select {
-  max-inline-size: 150px;
-}
+  .status-select {
+    max-inline-size: 150px;
+  }
 
-.tasks-timeline {
-  position: relative;
-  padding-block: 16px;
-  padding-inline: 0;
-}
+  .tasks-timeline {
+    position: relative;
+    padding-block: 16px;
+    padding-inline: 0;
+  }
 
-.timeline-item {
-  position: relative;
-  display: flex;
-  padding-block-end: 32px;
-}
+  .timeline-item {
+    position: relative;
+    display: flex;
+    padding-block-end: 32px;
+  }
 
-.timeline-item::before {
-  position: absolute;
-  background: #e0e0e0;
-  content: "";
-  inline-size: 2px;
-  inset-block: 30px 0;
-  inset-inline-start: 15px;
-}
+  .timeline-item::before {
+    position: absolute;
+    background: rgba(var(--v-theme-border-color), 0.12);
+    content: "";
+    inline-size: 2px;
+    inset-block: 30px 0;
+    inset-inline-start: 15px;
+  }
 
-.timeline-item.last-item::before {
-  display: none;
-}
+  .timeline-item.last-item::before {
+    display: none;
+  }
 
-.timeline-icon {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  block-size: 32px;
-  inline-size: 32px;
-  margin-inline-end: 16px;
-}
+  .timeline-icon {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    block-size: 32px;
+    inline-size: 32px;
+    margin-inline-end: 16px;
+  }
 
-.timeline-content {
-  flex: 1;
-  padding: 16px;
-  border-radius: 8px;
-  background: white;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
+  .timeline-content {
+    flex: 1;
+    padding: 16px;
+    border: 1px solid rgba(var(--v-theme-border-color), var(--v-border-opacity));
+    border-radius: 8px;
+    background: rgb(var(--v-theme-surface));
+    box-shadow: 0 1px 3px rgba(var(--v-shadow-key-umbra-color), var(--v-shadow-sm-opacity));
+    color: rgb(var(--v-theme-on-surface));
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
 
-.timeline-content:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 10%) !important;
-  transform: translateX(4px);
-}
+  .timeline-content:hover {
+    box-shadow: 0 4px 12px rgba(var(--v-shadow-key-umbra-color), var(--v-shadow-md-opacity));
+    transform: translateX(4px);
+  }
 
-.task-details {
-  padding: 12px;
-  border-radius: 8px;
-  background: #f5f5f5;
-  font-size: 0.9rem;
-  margin-block: 12px;
-  margin-inline: 0;
-}
+  .task-details {
+    padding: 12px;
+    border-radius: 8px;
+    background: rgb(var(--v-theme-grey-100));
+    font-size: 0.9rem;
+    margin-block: 12px;
+    margin-inline: 0;
+  }
 
-.task-description {
-  color: #333;
-  margin-block-end: 8px;
-}
+  .task-description {
+    color: rgb(var(--v-theme-on-surface));
+    margin-block-end: 8px;
+  }
 
-.task-meta {
-  display: flex;
-  color: #666;
-  gap: 16px;
-}
+  .task-meta {
+    display: flex;
+    color: rgb(var(--v-theme-grey-500));
+    gap: 16px;
+  }
 
-.meta-item {
-  display: flex;
-  align-items: center;
-}
+  .meta-item {
+    display: flex;
+    align-items: center;
+  }
 
-.meta-section {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 0.9rem;
-  margin-block-start: 12px;
-}
+  .meta-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    margin-block-start: 12px;
+  }
 
-.timestamp {
-  display: flex;
-  align-items: center;
-  color: #666;
-}
+  .timestamp {
+    display: flex;
+    align-items: center;
+    color: rgb(var(--v-theme-grey-500));
+  }
 
-.actions {
-  display: flex;
-  gap: 4px;
-}
+  .actions {
+    display: flex;
+    gap: 4px;
+  }
 
-/* Color utilities */
-.bg-success {
-  background-color: #4caf50;
-}
+  /* Status Colors - Using CSS custom properties for theme consistency */
+  .bg-success {
+    background-color: rgb(var(--v-theme-success));
+  }
 
-.bg-info {
-  background-color: #2196f3;
-}
+  .bg-info {
+    background-color: rgb(var(--v-theme-info));
+  }
 
-.bg-error {
-  background-color: #f44336;
-}
+  .bg-error {
+    background-color: rgb(var(--v-theme-error));
+  }
 
-.bg-warning {
-  background-color: #ff9800;
-}
+  .bg-warning {
+    background-color: rgb(var(--v-theme-warning));
+  }
 
-.bg-grey {
-  background-color: #9e9e9e;
-}
+  .bg-grey {
+    background-color: rgb(var(--v-theme-grey-500));
+  }
 
-.bg-purple {
-  background-color: #9c27b0;
-}
+  .bg-purple {
+    background-color: rgb(var(--v-theme-secondary));
+  }
+
+  /* Dark mode specific adjustments */
+  :root[data-theme="dark"] .tasks-card,
+  :root[data-theme="dark"] .timeline-content {
+    border-color: rgba(var(--v-theme-border-color), 0.08);
+    background-color: rgb(var(--v-theme-surface));
+  }
+
+  :root[data-theme="dark"] .task-details {
+    background-color: rgba(var(--v-theme-grey-800), 0.06);
+  }
+
+  :root[data-theme="dark"] .timeline-item::before {
+    background: rgba(var(--v-theme-border-color), 0.08);
+  }
+
+  /* Handle hover states in dark mode */
+  :root[data-theme="dark"] .timeline-content:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 30%);
+  }
+
+  /* Ensure text remains visible in dark mode */
+  :root[data-theme="dark"] .task-description,
+  :root[data-theme="dark"] .meta-section {
+    color: rgb(var(--v-theme-on-surface));
+  }
 </style>

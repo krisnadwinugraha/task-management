@@ -262,6 +262,9 @@ onMounted(() => {
 .activity-log-card {
   overflow: hidden;
   border-radius: 12px;
+  background-color: var(--v-theme-surface);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 10%), 0 2px 4px -1px rgba(0, 0, 0, 6%);
+  color: var(--v-theme-on-surface);
 }
 
 .search-field {
@@ -286,7 +289,7 @@ onMounted(() => {
 
 .timeline-item::before {
   position: absolute;
-  background: #e0e0e0;
+  background: var(--v-theme-border-subtle);
   content: "";
   inline-size: 2px;
   inset-block: 30px 0;
@@ -313,7 +316,9 @@ onMounted(() => {
   flex: 1;
   padding: 16px;
   border-radius: 8px;
-  background: white;
+  background: var(--v-theme-surface);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 10%), 0 2px 4px -1px rgba(0, 0, 0, 6%);
+  color: var(--v-theme-on-surface);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -326,7 +331,7 @@ onMounted(() => {
   display: flex;
   padding: 12px;
   border-radius: 8px;
-  background: #f5f5f5;
+  background: var(--v-theme-grey-100);
   font-size: 0.9rem;
   margin-block: 12px;
   margin-inline: 0;
@@ -337,7 +342,7 @@ onMounted(() => {
 }
 
 .changes-title {
-  color: #666;
+  color: var(--v-theme-grey-500);
   font-weight: 600;
   margin-block-end: 8px;
 }
@@ -348,13 +353,13 @@ onMounted(() => {
 }
 
 .change-key {
-  color: #666;
+  color: var(--v-theme-grey-500);
   font-weight: 500;
   margin-inline-end: 8px;
 }
 
 .change-value {
-  color: #333;
+  color: var(--v-theme-grey-900);
 }
 
 .meta-section {
@@ -368,7 +373,7 @@ onMounted(() => {
 .timestamp {
   display: flex;
   align-items: center;
-  color: #666;
+  color: var(--v-theme-grey-500);
 }
 
 /* Color utilities */

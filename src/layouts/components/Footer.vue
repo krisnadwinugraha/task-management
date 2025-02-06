@@ -1,41 +1,23 @@
 <template>
-  <div class="h-100 d-flex align-center justify-space-between text-medium-emphasis">
-    <!-- 👉 Footer: left content -->
+  <div class="footer-container d-flex align-center justify-space-between text-medium-emphasis">
+    <!-- Footer: left content -->
     <div class="d-flex align-center text-base">
-      &copy;
-      {{ new Date().getFullYear() }},
-      Made With
-      <VIcon
-        icon="ri-heart-fill"
-        color="error"
-        size="1.25rem"
-        class="mx-1"
-      />
-      By <a
-        href="https://pixinvent.com"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="text-primary ms-1"
-      >Pixinvent</a>
+      &copy; {{ new Date().getFullYear() }},
+      <span class="ms-1">Task Management System</span>
     </div>
-    <!-- 👉 Footer: right content -->
-    <span class="d-md-flex gap-x-4 text-primary d-none">
-      <a
-        href="https://themeforest.net/licenses/standard"
-        target="noopener noreferrer"
-      >License</a>
-      <a
-        href="https://1.envato.market/pixinvent_portfolio"
-        target="noopener noreferrer"
-      >More Themes</a>
-      <a
-        href="https://demos.pixinvent.com/materialize-vuejs-admin-template/documentation/"
-        target="noopener noreferrer"
-      >Documentation</a>
-      <a
-        href="https://pixinvent.ticksy.com/"
-        target="noopener noreferrer"
-      >Support</a>
-    </span>
+    <!-- Footer: right content -->
+    <div class="d-flex gap-x-4">
+      <a href="/privacy-policy" class="text-primary">Privacy Policy</a>
+      <a href="/terms-of-service" class="text-primary">Terms of Service</a>
+      <a href="/contact-us" class="text-primary">Contact Us</a>
+    </div>
   </div>
 </template>
+
+<style scoped>
+.footer-container {
+  padding: 16px;
+  background-color: var(--v-theme-surface);
+  border-block-start: 1px solid var(--v-theme-border-subtle);
+}
+</style>
