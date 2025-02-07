@@ -1,17 +1,16 @@
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/useAuthStore'
-import { useGenerateImageVariant } from '@/@core/composable/useGenerateImageVariant'
-import AuthProvider from '@/views/pages/authentication/AuthProvider.vue'
-import authV2LoginIllustrationBorderedDark from '@images/pages/auth-v2-login-illustration-bordered-dark.png'
-import authV2LoginIllustrationBorderedLight from '@images/pages/auth-v2-login-illustration-bordered-light.png'
-import authV2LoginIllustrationDark from '@images/pages/auth-v2-login-illustration-dark.png'
-import authV2LoginIllustrationLight from '@images/pages/auth-v2-login-illustration-light.png'
-import authV2LoginMaskDark from '@images/pages/auth-v2-login-mask-dark.png'
-import authV2LoginMaskLight from '@images/pages/auth-v2-login-mask-light.png'
 import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
 import { themeConfig } from '@themeConfig'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+
+// Use blank layout
+definePage({ 
+  meta: { 
+    layout: 'blank'  // This ensures no nav/sidebar appears
+  } 
+})
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -19,195 +18,158 @@ const authStore = useAuthStore()
 const form = ref({
   email: '',
   password: '',
-  remember: false,
 })
 
 const isPasswordVisible = ref(false)
-const errorMessage = ref('') // Reactive error message
-const successMessage = ref('') // Reactive error message
-const authV2LoginMask = useGenerateImageVariant(authV2LoginMaskLight, authV2LoginMaskDark)
-const authV2LoginIllustration = useGenerateImageVariant(authV2LoginIllustrationLight, authV2LoginIllustrationDark, authV2LoginIllustrationBorderedLight, authV2LoginIllustrationBorderedDark, true)
-
-definePage({ meta: { layout: 'blank' } })
+const errorMessage = ref('')
+const successMessage = ref('')
+const isLoading = ref(false)
 
 async function handleLogin() {
-  const success = await authStore.login(
-    form.value.email,
-    form.value.password,
-    form.value.remember
-  )
+  isLoading.value = true
+  errorMessage.value = ''
   
-  if (success) {
-    successMessage.value = 'Login successful! Redirecting...' // Set the success message
-    router.push('/')
-  } else {
-    // Set the error message
-    errorMessage.value = 'Incorrect email or password. Please try again.' // Set the error message
+  try {
+    const success = await authStore.login(
+      form.value.email,
+      form.value.password
+    )
+    
+    if (success) {
+      successMessage.value = 'Login successful! Redirecting...'
+      router.push('/')
+    } else {
+      errorMessage.value = 'Incorrect email or password. Please try again.'
+    }
+  } catch (error) {
+    errorMessage.value = 'An error occurred. Please try again.'
+  } finally {
+    isLoading.value = false
   }
 }
 </script>
 
 <template>
-  <RouterLink to="/">
-    <div class="app-logo auth-logo">
-      <VNodeRenderer :nodes="themeConfig.app.logo" />
-      <h1 class="app-logo-title">
-        {{ themeConfig.app.title }}
-      </h1>
-    </div>
-  </RouterLink>
-
-  <VRow
-    no-gutters
-    class="auth-wrapper"
-  >
-    <VCol
-      md="8"
-      class="d-none d-md-flex align-center justify-center position-relative"
+  <div class="auth-wrapper">
+    <VCard
+      flat
+      :max-width="500"
+      class="auth-card mt-12 mt-sm-0 pa-4"
     >
-      <div class="d-flex align-center justify-center pa-10">
-        <img
-          :src="authV2LoginIllustration"
-          class="auth-illustration w-100"
-          alt="auth-illustration"
+      <VCardText class="text-center pt-2">
+        <RouterLink
+          to="/"
+          class="d-inline-block mb-8"
         >
-      </div>
-      <VImg
-        :src="authV2LoginMask"
-        class="d-none d-md-flex auth-footer-mask"
-        alt="auth-mask"
-      />
-    </VCol>
-    <VCol
-      cols="12"
-      md="4"
-      class="auth-card-v2 d-flex align-center justify-center"
-      style="background-color: rgb(var(--v-theme-surface));"
-    >
-      <VCard
-        flat
-        :max-width="500"
-        class="mt-12 mt-sm-0 pa-5 pa-lg-7"
-      >
-        <VCardText>
-          <h4 class="text-h4 mb-1">
-            Welcome to <span class="text-capitalize">{{ themeConfig.app.title }}! 👋🏻</span>
-          </h4>
+          <div class="d-flex align-center justify-center">
+            <VNodeRenderer :nodes="themeConfig.app.logo" />
+            <h1 class="text-h3 font-weight-bold ms-2 text-primary">
+              {{ themeConfig.app.title }}
+            </h1>
+          </div>
+        </RouterLink>
 
-          <p class="mb-0">
-            Please sign-in to your account and start the adventure
-          </p>
-        </VCardText>
+        <h4 class="text-h4 font-weight-bold mb-1">
+          Welcome Back! 👋
+        </h4>
 
-        <VCardText>
-          <VAlert
-            v-if="successMessage"
-            variant="outlined"
-            color="success"
-            class="mb-4"
-          >
-            {{ successMessage }}
-          </VAlert>
+        <p class="text-medium-emphasis mb-6">
+          Please sign in to continue
+        </p>
 
-          <!-- Error Alert -->
-          <VAlert
-            v-if="errorMessage"
-            variant="outlined"
-            color="error"
-            class="mb-4"
-          >
-            {{ errorMessage }}
-          </VAlert>
+        <VAlert
+          v-if="successMessage"
+          density="comfortable"
+          variant="tonal"
+          color="success"
+          class="mb-4"
+        >
+          {{ successMessage }}
+        </VAlert>
 
-          <VForm @submit.prevent="handleLogin">
-            <VRow>
-              <!-- email -->
-              <VCol cols="12">
-                <VTextField
-                  v-model="form.email"
-                  autofocus
-                  label="Email"
-                  type="email"
-                  placeholder="johndoe@email.com"
-                />
-              </VCol>
+        <VAlert
+          v-if="errorMessage"
+          density="comfortable"
+          variant="tonal"
+          color="error"
+          class="mb-4"
+        >
+          {{ errorMessage }}
+        </VAlert>
 
-              <!-- password -->
-              <VCol cols="12">
-                <VTextField
-                  v-model="form.password"
-                  label="Password"
-                  placeholder="············"
-                  :type="isPasswordVisible ? 'text' : 'password'"
-                  :append-inner-icon="isPasswordVisible ? 'ri-eye-off-line' : 'ri-eye-line'"
-                  @click:append-inner="isPasswordVisible = !isPasswordVisible"
-                />
+        <VForm @submit.prevent="handleLogin">
+          <VRow>
+            <VCol cols="12">
+              <VTextField
+                v-model="form.email"
+                label="Email"
+                type="email"
+                placeholder="johndoe@email.com"
+                prepend-inner-icon="ri-mail-line"
+                variant="outlined"
+                :rules="[v => !!v || 'Email is required']"
+              />
+            </VCol>
 
-                <!-- remember me checkbox -->
-                <div class="d-flex align-center justify-space-between flex-wrap my-6 gap-x-2">
-                  <VCheckbox
-                    v-model="form.remember"
-                    label="Remember me"
-                  />
+            <VCol cols="12">
+              <VTextField
+                v-model="form.password"
+                label="Password"
+                placeholder="············"
+                prepend-inner-icon="ri-lock-line"
+                :append-inner-icon="isPasswordVisible ? 'ri-eye-off-line' : 'ri-eye-line'"
+                :type="isPasswordVisible ? 'text' : 'password'"
+                variant="outlined"
+                :rules="[v => !!v || 'Password is required']"
+                @click:append-inner="isPasswordVisible = !isPasswordVisible"
+              />
+            </VCol>
 
-                  <a
-                    class="text-primary"
-                    href="#"
-                  >
-                    Forgot Password?
-                  </a>
-                </div>
-
-                <!-- login button -->
-                <VBtn
-                  block
-                  type="submit"
-                  :loading="authStore.loading"
-                >
-                  Login
-                </VBtn>
-              </VCol>
-
-              <!-- create account -->
-              <VCol
-                cols="12"
-                class="text-body-1 text-center"
+            <VCol cols="12">
+              <VBtn
+                block
+                size="large"
+                color="primary"
+                type="submit"
+                :loading="isLoading"
+                :disabled="isLoading"
+                class="mt-4"
+                style="min-block-size: 44px;"
               >
-                <span class="d-inline-block">
-                  New on our platform?
-                </span>
-                <a
-                  class="text-primary ms-1 d-inline-block text-body-1"
-                  href="#"
-                >
-                  Create an account
-                </a>
-              </VCol>
-
-              <VCol
-                cols="12"
-                class="d-flex align-center"
-              >
-                <VDivider />
-                <span class="mx-4 text-high-emphasis">or</span>
-                <VDivider />
-              </VCol>
-
-              <!-- auth providers -->
-              <VCol
-                cols="12"
-                class="text-center"
-              >
-                <AuthProvider />
-              </VCol>
-            </VRow>
-          </VForm>
-        </VCardText>
-      </VCard>
-    </VCol>
-  </VRow>
+                Sign In
+              </VBtn>
+            </VCol>
+          </VRow>
+        </VForm>
+      </VCardText>
+    </VCard>
+  </div>
 </template>
 
 <style lang="scss">
-@use "@core/scss/template/pages/page-auth.scss";
+.auth-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgb(var(--v-theme-surface));
+  min-block-size: 100vh;
+}
+
+.auth-card {
+  background: rgb(var(--v-theme-surface)) !important;
+  inline-size: 100%;
+
+  .v-field {
+    border-radius: 8px;
+  }
+
+  .v-btn {
+    border-radius: 8px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: none;
+  }
+}
 </style>
