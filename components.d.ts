@@ -7,7 +7,6 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
-    ActivityCard: typeof import('./src/components/Dashboard/ActivityCard.vue')['default']
     ActivityFeed: typeof import('./src/components/Dashboard/ActivityFeed.vue')['default']
     ActivityPagination: typeof import('./src/components/Activity/ActivityPagination.vue')['default']
     ActivitySearch: typeof import('./src/components/Activity/ActivitySearch.vue')['default']
@@ -41,7 +40,6 @@ declare module 'vue' {
     CustomRadios: typeof import('./src/@core/components/app-form-elements/CustomRadios.vue')['default']
     CustomRadiosWithIcon: typeof import('./src/@core/components/app-form-elements/CustomRadiosWithIcon.vue')['default']
     CustomRadiosWithImage: typeof import('./src/@core/components/app-form-elements/CustomRadiosWithImage.vue')['default']
-    DashboardStat: typeof import('./src/components/Dashboard/DashboardStat.vue')['default']
     DashboardStats: typeof import('./src/components/Dashboard/DashboardStats.vue')['default']
     DemoAlertBasic: typeof import('./src/components/alert/DemoAlertBasic.vue')['default']
     DemoAlertBorder: typeof import('./src/components/alert/DemoAlertBorder.vue')['default']
